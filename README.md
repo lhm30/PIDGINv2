@@ -20,45 +20,32 @@ Molecular Descriptors : 2048bit Morgan Binary Fingerprints (Rdkit) - ECFP4
 * Actives:	2,089,404
 * Inactives:	11,829,475
 
-Pathway information from NCBI BioSystems
-Disease information from DisGeNET
+All rights reserved 2014
+
+* Pathway information from NCBI BioSystems
+* Disease information from DisGeNET
 
 ![](http://ibi.imim.es/wp-content/uploads/2012/10/DisGeNET_logo_roundedEdges.png)
 ![](http://www.ncbi.nlm.nih.gov/Structure/IMG/banner_graphics/biosystems_entrez3.png) ![](http://www.genome.jp/Fig/kegg128.gif) ![](http://biocyc.org/BioCyc.gif) ![](http://blog.openhelix.eu/wp-content/uploads/2011/01/Reactome_logo.jpg) ![](http://i.picresize.com/images/2015/04/29/oAE7h.png) ![](https://s-media-cache-ak0.pinimg.com/216x146/e3/71/2d/e3712dd81b80c17e24d4fb529f6bafab.jpg) ![](http://www.wikipathways.org/skins/common/images/earth-or-pathway_text3_beta.png)
-
-Dependencies : rdkit, sklearn, numpy
-
-![](http://www.rdkit.org/Images/logo.png) ![](http://scikit-learn.org/stable/_static/scikit-learn-logo-small.png) ![](http://upload.wikimedia.org/wikipedia/ru/c/cc/Numpylogo.png)
-
-ChemAxon Standardizer was used for structure canonicalization and transformation, JChem 6.0.2.
-
-![](http://www.chemaxon.com/images/powered_100px.gif)  http://www.chemaxon.com
-
+![](http://www.rdkit.org/Images/logo.png)
+![](http://scikit-learn.org/stable/_static/scikit-learn-logo-small.png) ![](http://upload.wikimedia.org/wikipedia/ru/c/cc/Numpylogo.png)
 ![](https://dnasu.org/DNASU/image/Uniprot300.jpg)
+![](http://www.chemaxon.com/images/powered_100px.gif)
 
-
-All rights reserved 2014
 ==========================================================================================
+INSTALLATION
 
-
-Dependencies: 
-
-Requires Python 2.7, Scikit-learn [1], Numpy [2] and Rdkit [3] to be installed on system.
-
-Follow these steps on Linux:
+Follow these steps on Linux/OSX:
  
 1. ```Download and install Anaconda2 for Python 2.7 from https://www.continuum.io/downloads```
 2. Open terminal in Mac/Linux and run ```conda install -c https://conda.anaconda.org/rdkit rdkit``` 
 3. ```git clone https://github.com/lhm30/PIDGINv2/;cd PIDGINv2;curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip;rm temp.zip```
 
-N.B Models are 60GB
-N.B Step 3 may take up to 10 minutes
+* N.B Models are 60GB
+
+* N.B Step 3 may take up to 10 minutes
 
 ==========================================================================================
-
-
-Instructions:
-
 IMPORTANT:
 *	You MUST run ```curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip;rm temp.zip``` in terminal/cmd prompt to download the models before first run!
 *	The program recognises line-separated SMILES in .csv format
@@ -69,9 +56,7 @@ IMPORTANT:
 *	cytotox_library.csv and nontoxic_background.csv are included for use as example dataset for testing
 
 ==========================================================================================
-
-
-Scripts:
+INSTRUCTIONS:
 
 1. ```predict_raw.py filename.csv N_cores```
     This script outputs the Platt-scaled (sigmoid) probabilities of the Random Forest classifier for the compounds in a matrix.
