@@ -32,8 +32,8 @@ All rights reserved 2014
 ![](https://dnasu.org/DNASU/image/Uniprot300.jpg)
 ![](http://www.chemaxon.com/images/powered_100px.gif)
 
-==========================================================================================
 INSTALLATION
+==========================================================================================
 
 Follow these steps on Linux/OSX:
  
@@ -45,8 +45,9 @@ Follow these steps on Linux/OSX:
 
 * N.B Step 3 may take up to 10 minutes
 
+IMPORTANT
 ==========================================================================================
-IMPORTANT:
+
 *	You MUST run ```curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip;rm temp.zip``` in terminal/cmd prompt to download the models before first run!
 *	The program recognises line-separated SMILES in .csv format
 *	Molecules Should be standardized before running models
@@ -55,8 +56,8 @@ IMPORTANT:
 *	Do not modify the 'models', 'bg_predictions.txt' etc. names or directories 
 *	cytotox_library.csv and nontoxic_background.csv are included for use as example dataset for testing
 
+INSTRUCTIONS
 ==========================================================================================
-INSTRUCTIONS:
 
 1. ```predict_raw.py filename.csv N_cores```
     This script outputs the Platt-scaled (sigmoid) probabilities of the Random Forest classifier for the compounds in a matrix.
@@ -122,7 +123,3 @@ INSTRUCTIONS:
     ```
 
 ==========================================================================================
-
- [1] http://scikit-learn.org/stable/
- [2] http://www.numpy.org
- [3] http://www.rdkit.org
