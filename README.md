@@ -43,14 +43,14 @@ Dependencies:
 
 Requires Python 2.7, Scikit-learn [1], Numpy [2] and Rdkit [3] to be installed on system.
 
-Models are 60GB
-
 Follow these steps on Linux:
  
 1. ```Download and install Anaconda2 for Python 2.7 from https://www.continuum.io/downloads```
 2. Open terminal in Mac/Linux and run ```conda install -c https://conda.anaconda.org/rdkit rdkit``` 
 3. ```git clone https://github.com/lhm30/PIDGINv2/;cd PIDGINv2;curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip;rm temp.zip```
 
+N.B Models are 60GB
+N.B Step 3 may take up to 10 minutes
 
 ==========================================================================================
 
