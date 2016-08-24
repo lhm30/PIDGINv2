@@ -37,6 +37,7 @@ ChemAxon Standardizer was used for structure canonicalization and transformation
 All rights reserved 2014
 ==========================================================================================
 
+
 Dependencies: 
 
 Requires Python 2.7, Scikit-learn [1], Numpy [2] and Rdkit [3] to be installed on system.
@@ -44,9 +45,11 @@ Requires Python 2.7, Scikit-learn [1], Numpy [2] and Rdkit [3] to be installed o
 Follow these steps on Linux:
  
 1. ```Download and install Anaconda2 for Python 2.7 from https://www.continuum.io/downloads```
-2. ```Open terminal and run 'conda install -c https://conda.anaconda.org/rdkit rdkit’```
+2. Open terminal in Mac/Linux and run ```conda install -c https://conda.anaconda.org/rdkit rdkit```
+3. Open terminal in Mac/Linux and run ```curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip -x '__MACOSX/*';rm temp.zip```
 
 ==========================================================================================
+
 
 Instructions:
 
@@ -59,6 +62,10 @@ IMPORTANT:
 *	Do not modify the 'models', 'bg_predictions.txt' etc. names or directories 
 *	cytotox_library.csv and nontoxic_background.csv are included for use as example dataset for testing
 
+==========================================================================================
+
+
+Scripts:
 
 1. ```predict_raw.py filename.csv N_cores```
     This script outputs the Platt-scaled (sigmoid) probabilities of the Random Forest classifier for the compounds in a matrix.
