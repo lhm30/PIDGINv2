@@ -19,11 +19,10 @@ Molecular Descriptors : 2048bit Morgan Binary Fingerprints (Rdkit) - ECFP4
 * Bioactivities: 13,918,879
 * Actives:	2,089,404
 * Inactives:	11,829,475
-
-All rights reserved 2014
-
 * Pathway information from NCBI BioSystems
 * Disease information from DisGeNET
+
+All rights reserved 2014
 
 ![](http://ibi.imim.es/wp-content/uploads/2012/10/DisGeNET_logo_roundedEdges.png)
 ![](http://www.ncbi.nlm.nih.gov/Structure/IMG/banner_graphics/biosystems_entrez3.png) ![](http://www.genome.jp/Fig/kegg128.gif) ![](http://biocyc.org/BioCyc.gif) ![](http://blog.openhelix.eu/wp-content/uploads/2011/01/Reactome_logo.jpg) ![](http://i.picresize.com/images/2015/04/29/oAE7h.png) ![](https://s-media-cache-ak0.pinimg.com/216x146/e3/71/2d/e3712dd81b80c17e24d4fb529f6bafab.jpg) ![](http://www.wikipathways.org/skins/common/images/earth-or-pathway_text3_beta.png)
@@ -42,7 +41,6 @@ Follow these steps on Linux/OSX:
 3. ```git clone https://github.com/lhm30/PIDGINv2/;cd PIDGINv2;curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip;rm temp.zip```
 
 * N.B Models are 60GB
-
 * N.B Step 3 may take up to 10 minutes
 
 IMPORTANT
@@ -84,12 +82,16 @@ INSTRUCTIONS
     
 3. ```predict_enriched.py filename.csv N_cores tpr_threshold DisGeNET_threshold```
     This script enriched targets, NCBI Biosystems pathways and DisGeNET diseases for a library of compounds, when compared to a precomputed target predictions from a background set of 2,000,000 compounds from PubChem (bg_predictions.txt). 
+
     The protocol corrects for promiscuous models / biases in training data and to which targets are statistically associated with compounds in filename.csv.
+    
     Target predictions for filename.csv are compared against PubChem predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Fishers Test p-values.
+    
     For tables with large numbers, the (inexact) chi-square test implemented in the function chi2 test should be used. Pathways and DisGeNET predictions are compared against PubChem predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Chi-square test of independence p-values.
 
-    'bg_predictions.txt' contains rows of target models with corresponding columns for the number of background compounds from PubChem at a given TPR threshold (to 2DP).
-    'DisGeNET_diseases.txt' contains disease data used to annotate target predictions. DisGeNET assigns a gene-disease association score to give confidence for annotations, and a DisGeNET_threshold can be supplied at runtime when annotating predictions with diseases (no threshold applied by default).
+    bg_predictions.txt contains rows of target models with corresponding columns for the number of background compounds from PubChem at a given TPR threshold (to 2DP).
+    
+    DisGeNET_diseases.txt contains disease data used to annotate target predictions. DisGeNET assigns a gene-disease association score to give confidence for annotations, and a DisGeNET_threshold can be supplied at runtime when annotating predictions with diseases (no threshold applied by default).
         
     Example of how to run the code:
 
@@ -101,8 +103,11 @@ INSTRUCTIONS
     
 7. ```predict_enriched_two_libraries.py input_active_library.csv input_inactive_library.csv threshold```
     This script calculates enriched targets, NCBI BioSystems pathways and DisGeNET for two compound libraries (e.g could be phenotypically active compounds and to phenotypically inactive compounds).
+
     The protocol corrects for promiscuous models / biases in training data and to which targets are statistically associated with compounds in input_active_library.csv.
+    
     Target predictions for input_active_library.csv are compared against input_inactive_library.csv predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Fishers Test p-values.
+    
     For tables with large numbers, the (inexact) chi-square test implemented in the function chi2 test should be used. Pathways and DisGeNET predictions are compared against PubChem predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Chi-square test of independence p-values.
 
     Example of how to run the code:
