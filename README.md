@@ -68,6 +68,7 @@ INSTRUCTIONS
 	
 	Output is a matrix of Platt-scaled probabilities for an input list of compounds calculated on a machine using 4 cores
 
+
 2. ```predict_binary.py filename.csv N_cores tpr_threshold```
     This script generates binary predictions for the models after application of a user-specified predicted true-positive rate (TPR) threshold.
     
@@ -79,15 +80,16 @@ INSTRUCTIONS
     ```
     
     where 30 cores are used to produce predictions, and 0.5 would apply a 50% TPR confidence threshold
+  
     
 3. ```predict_enriched.py filename.csv N_cores tpr_threshold DisGeNET_threshold```
     This script enriched targets, NCBI Biosystems pathways and DisGeNET diseases for a library of compounds, when compared to a precomputed target predictions from a background set of 2,000,000 compounds from PubChem (bg_predictions.txt). 
 
     The protocol corrects for promiscuous models / biases in training data and to which targets are statistically associated with compounds in filename.csv.
     
-    Target predictions for filename.csv are compared against PubChem predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Fishers Test p-values.
+    Target predictions for filename.csv are compared against PubChem predictions using the Prediction Ratio (ref. http://tinyurl.com/predictionratio), Odd's Ratio and Fishers Test p-values.
     
-    For tables with large numbers, the (inexact) chi-square test implemented in the function chi2 test should be used. Pathways and DisGeNET predictions are compared against PubChem predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Chi-square test of independence p-values.
+    For tables with large numbers, the (inexact) chi-square test implemented in the function chi2 test should be used. Pathways and DisGeNET predictions are compared against PubChem predictions using the Prediction Ratio, Odd's Ratio and Chi-square test of independence p-values.
 
     bg_predictions.txt contains rows of target models with corresponding columns for the number of background compounds from PubChem at a given TPR threshold (to 2DP).
     
@@ -101,6 +103,7 @@ INSTRUCTIONS
     
     The output is a ranked list of targets that are more statistically associated with the input compounds. A low Prediction Ratio, Odd's Ratio and p-value metric indicates a higher enrichment for a target/pathway/disease when compared to the background rate
     
+    
 7. ```predict_enriched_two_libraries.py input_active_library.csv input_inactive_library.csv threshold```
     This script calculates enriched targets, NCBI BioSystems pathways and DisGeNET for two compound libraries (e.g could be phenotypically active compounds and to phenotypically inactive compounds).
 
@@ -108,7 +111,7 @@ INSTRUCTIONS
     
     Target predictions for input_active_library.csv are compared against input_inactive_library.csv predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Fishers Test p-values.
     
-    For tables with large numbers, the (inexact) chi-square test implemented in the function chi2 test should be used. Pathways and DisGeNET predictions are compared against PubChem predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Chi-square test of independence p-values.
+    For tables with large numbers, the (inexact) chi-square test implemented in the function chi2 test should be used. Pathways and DisGeNET predictions are compared against PubChem predictions using the Prediction Ratio (ref. http://tinyurl.com/predictionratio), Odd's Ratio and Chi-square test of independence p-values.
 
     Example of how to run the code:
 
@@ -117,6 +120,7 @@ INSTRUCTIONS
     ```
     
     The output is a ranked list of targets that are more statistically associated with the input compounds. A low Prediction Ratio, Odd's Ratio and p-value metric indicates a higher enrichment for a target/pathway/disease when compared to the inactive compound set.
+    
     
 8. ```predict_fingerprints.py threshold filename.csv```
     This script calculates target and pathway hits and represents them as binary fingerprints in a matrix.
