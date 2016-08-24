@@ -49,7 +49,7 @@ Follow these steps on Linux:
  
 1. ```Download and install Anaconda2 for Python 2.7 from https://www.continuum.io/downloads```
 2. Open terminal in Mac/Linux and run ```conda install -c https://conda.anaconda.org/rdkit rdkit``` 
-3. ```git clone https://github.com/lhm30/PIDGINv2/;cd PIDGINv2;curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip -x '__MACOSX/*';rm temp.zip```
+3. ```git clone https://github.com/lhm30/PIDGINv2/;cd PIDGINv2;curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip;rm temp.zip```
 
 
 ==========================================================================================
@@ -58,7 +58,7 @@ Follow these steps on Linux:
 Instructions:
 
 IMPORTANT:
-*	You MUST run ```curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip -x '__MACOSX/*';rm temp.zip``` in terminal/cmd prompt to download the models before first run!
+*	You MUST run ```curl -L -o temp.zip https://www.dropbox.com/s/1jjatrzt2gvqzo0/model.zip?dl=0;unzip temp.zip;rm temp.zip``` in terminal/cmd prompt to download the models before first run!
 *	The program recognises line-separated SMILES in .csv format
 *	Molecules Should be standardized before running models
 *	ChemAxon Standardizer should be used for structure canonicalization and is free for academic use at (http://www.chemaxon.com)
