@@ -109,7 +109,7 @@ INSTRUCTIONS
 
     The protocol corrects for promiscuous models / biases in training data and to which targets are statistically associated with compounds in input_active_library.csv.
     
-    Target predictions for input_active_library.csv are compared against input_inactive_library.csv predictions using the Prediction Ratio (ref. https://www.repository.cam.ac.uk/bitstream/handle/1810/246122/Liggi%20et%20al%202014%20Future%20Medicinal%20Chemistry.pdf?sequence=3), Odd's Ratio and Fishers Test p-values.
+    Target predictions for input_active_library.csv are compared against input_inactive_library.csv predictions using the Prediction Ratio (ref. http://tinyurl.com/predictionratio), Odd's Ratio and Fishers Test p-values.
     
     For tables with large numbers, the (inexact) chi-square test implemented in the function chi2 test should be used. Pathways and DisGeNET predictions are compared against PubChem predictions using the Prediction Ratio (ref. http://tinyurl.com/predictionratio), Odd's Ratio and Chi-square test of independence p-values.
 
