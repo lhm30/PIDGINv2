@@ -98,7 +98,7 @@ def getPathwayInfo():
 #get pre-calculated bg hits from PubChem
 def getBGhits(threshold):
 	bg_column = int((threshold*100)+1)
-	bg_file = [l.split('\t') for l in open('bg_predictions.txt').read().splitlines()]
+	bg_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/bg_predictions.txt').read().splitlines()]
 	bg_file.pop(0)
 	bg_predictions = {l[0] : int(l[bg_column]) for l in bg_file}
 	return bg_predictions
