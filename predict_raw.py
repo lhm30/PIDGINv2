@@ -56,7 +56,7 @@ def importQuery(query):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open('classes_in_model.txt').read().splitlines()]
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:5] for l in model_info}
 	return return_dict
 

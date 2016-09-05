@@ -63,7 +63,7 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open('classes_in_model.txt').read().splitlines()]
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:5] for l in model_info}
 	return return_dict
 
@@ -71,7 +71,7 @@ def getUniprotInfo():
 def getDisgenetInfo():
 	return_dict1 = dict()
 	return_dict2 = dict()
-	disease_file = [l.split('\t') for l in open('DisGeNET_diseases.txt').read().splitlines()]
+	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/DisGeNET_diseases.txt').read().splitlines()]
 	for l in disease_file:
 		try:
 			return_dict1[l[0]].append(l[1])
@@ -86,7 +86,7 @@ def getDisgenetInfo():
 def getPathwayInfo():
 	return_dict1 = dict()
 	return_dict2 = dict()
-	pathway_info = [l.split('\t') for l in open('biosystems.txt').read().splitlines()]
+	pathway_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/biosystems.txt').read().splitlines()]
 	for l in pathway_info:
 		try:
 			return_dict1[l[0]].append(l[1])
