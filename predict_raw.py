@@ -64,7 +64,7 @@ def getUniprotInfo():
 def doTargetPrediction(pickled_model_name):
 	with open(pickled_model_name, 'rb') as fid:
 		clf = cPickle.load(fid)
-	preds = clf.predict(querymatrix)
+	preds = clf.predict_proba(querymatrix)[:,1]
 	if sum(preds) > 0:
 		return pickled_model_name.split('/')[-1][:-4],preds
 	else: return None
