@@ -143,7 +143,7 @@ try:
 	dgn_threshold = float(sys.argv[4])
 except IndexError:
 	dgn_threshold = 0
-models = [modelfile for modelfile in glob.glob('models/*.pkl')]
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
 model_info = getUniprotInfo()
 disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()
