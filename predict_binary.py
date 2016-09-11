@@ -35,24 +35,34 @@ def calcFingerprints(smiles):
 	return list(binary) 
 
 #calculate fingerprints for chunked array of smiles
-def arrayFP(input):
+def arrayFP(inp):
 	outfp = []
-	for i in input:
-		outfp.append(calcFingerprints(i))
-	return outfp
-	
+	outsmi = []
+	for i in inp:
+		try:
+			outfp.append(calcFingerprints(i))
+			outsmi.append(i)
+		except:
+			print 'SMILES Parse Error: ' + i
+	return outfp,outsmi
+
 #import user query
-def importQuery(query):
-	matrix = []
+def importQuery(in_file):
+	query = open(in_file).read().splitlines()
+	matrix = np.empty((len(query), 2048), dtype=np.uint8)
 	smiles_per_core = int(math.ceil(len(query) / N_cores)+1)
 	chunked_smiles = [query[x:x+smiles_per_core] for x in xrange(0, len(query), smiles_per_core)]
 	pool = Pool(processes=N_cores)  # set up resources
 	jobs = pool.imap(arrayFP, chunked_smiles)
+	current_end = 0
+	processed_smi = []
 	for i, result in enumerate(jobs):
-		matrix += result
+		matrix[current_end:current_end+len(result[0]), :] = result[0]
+		current_end += len(result[0])
+		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	return np.array(matrix,dtype=np.uint8)
+	return matrix[:current_end], processed_smi
 
 #get info for uniprots
 def getUniprotInfo():
@@ -101,8 +111,7 @@ print ' Total Number of Classes : ' + str(len(models))
 print ' Using TPR threshold of : ' + str(threshold)
 output_name = input_name + '_out_binary_' + str(threshold) + '.txt'
 out_file = open(output_name, 'w')
-smiles = open(input_name).read().splitlines()
-querymatrix = importQuery(smiles)
+querymatrix,smiles = importQuery(input_name)
 print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 prediction_results = performTargetPrediction(models)
 out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t' + '\t'.join(map(str,smiles)) + '\n')
