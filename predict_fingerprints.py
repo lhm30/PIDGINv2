@@ -110,8 +110,8 @@ def doTargetPrediction(pickled_model_name):
 
 #prediction runner
 def performTargetPrediction(models):
-	total_pw = []
-	total_disease = []
+	total_pw = set()
+	total_disease = set()
 	prediction_results = dict()
 	pool = Pool(processes=N_cores)  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
@@ -121,16 +121,14 @@ def performTargetPrediction(models):
 		sys.stdout.flush()
 		if result is not None:
 			prediction_results[result[0]] = result[1]
-			total_pw += pathway_links.get(result[0],[])
-			total_pw = list(set(total_pw))
+			total_pw = total_pw | set(pathway_links.get(result[0],[]))
 			try:
-				total_disease += [dis for dis in disease_links[result[0]] if disease_score[(dis,result[0])] > dgn_threshold]
-				total_disease = list(set(total_disease))
+				total_disease = total_disease | set([dis for dis in disease_links[result[0]] if disease_score[(dis,result[0])] > dgn_threshold])
 			except KeyError: pass
 	pool.close()
 	pool.join()
 	prediction_matrix = np.array([j for i,j in sorted(prediction_results.items())]).transpose()
-	return prediction_results, prediction_matrix, sorted(set(total_pw)), sorted(set(total_disease))
+	return prediction_results, prediction_matrix, sorted(list(total_pw)), sorted(list(total_disease))
 
 #main
 input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
