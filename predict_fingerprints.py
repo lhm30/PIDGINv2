@@ -17,7 +17,7 @@ import math
 import numpy as np
 from multiprocessing import Pool
 import multiprocessing
-import operator
+from collections import Counter
 multiprocessing.freeze_support()
 
 def introMessage():
@@ -26,7 +26,7 @@ def introMessage():
 	print ' Address: Centre For Molecular Informatics, Dept. Chemistry, Lensfield Road, Cambridge CB2 1EW'
 	print '==============================================================================================\n'
 	return
-	
+
 #calculate 2048bit morgan fingerprints, radius 2
 def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
@@ -37,13 +37,15 @@ def calcFingerprints(smiles):
 #calculate fingerprints for chunked array of smiles
 def arrayFP(inp):
 	outfp = []
+	outsmi = []
 	for i in inp:
 		try:
 			outfp.append(calcFingerprints(i))
+			outsmi.append(i)
 		except:
 			print 'SMILES Parse Error: ' + i
-	return outfp
-	
+	return outfp,outsmi
+
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
@@ -53,12 +55,14 @@ def importQuery(in_file):
 	pool = Pool(processes=N_cores)  # set up resources
 	jobs = pool.imap(arrayFP, chunked_smiles)
 	current_end = 0
+	processed_smi = []
 	for i, result in enumerate(jobs):
-		matrix[current_end:current_end+len(result), :] = result
-		current_end += len(result)
+		matrix[current_end:current_end+len(result[0]), :] = result[0]
+		current_end += len(result[0])
+		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	return matrix[:current_end]
+	return matrix[:current_end], processed_smi
 
 #get info for uniprots
 def getUniprotInfo():
@@ -70,15 +74,17 @@ def getUniprotInfo():
 def getDisgenetInfo():
 	return_dict1 = dict()
 	return_dict2 = dict()
-	disease_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/DisGeNET_diseases.txt').read().splitlines()]
-	for l in disease_info:
+	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/DisGeNET_diseases.txt').read().splitlines()]
+	for l in disease_file:
 		try:
 			return_dict1[l[0]].append(l[1])
 		except KeyError:
 			return_dict1[l[0]] = [l[1]]
-		return_dict2[l[1]] = l[2]
-	return return_dict1, return_dict2 
-	
+		try:
+			return_dict2[(l[1],l[0])] = float(l[2])
+		except ValueError: pass
+	return return_dict1, return_dict2
+
 #get info for biosystems pathways
 def getPathwayInfo():
 	return_dict1 = dict()
@@ -92,82 +98,85 @@ def getPathwayInfo():
 		return_dict2[l[1]] = l[2:]
 	return return_dict1, return_dict2 
 
-#calculate prediction ratio for two sets of predictions
-def calcPredictionRatio(preds1,preds2):
-	preds1_percentage = float(preds1)/float(len(querymatrix1))
-	preds2_percentage = float(preds2)/float(len(querymatrix2))
-	if preds1 == 0: return 999.0, round(preds1_percentage,3), round(preds2_percentage,3) 
-	if preds1 == 0 and preds2 == 0: return None
-	if preds2 == 0: return 0.0, round(preds1_percentage,3), round(preds2_percentage,3)
-	return round(preds2_percentage/preds1_percentage,3), round(preds1_percentage,3), round(preds2_percentage,3)
-
 #prediction worker	
 def doTargetPrediction(pickled_model_name):
 	with open(pickled_model_name, 'rb') as fid:
 		clf = cPickle.load(fid)
-	uniprot = pickled_model_name.split('/')[-1][:-4]
-	preds = clf.predict_proba(querymatrix1)[:,1] > threshold
-	return uniprot, list(map(int,preds))
+	probs = clf.predict_proba(querymatrix)[:,1]
+	preds = map(int,probs > threshold)
+	if sum(preds) > 0:
+		return pickled_model_name.split('/')[-1][:-4],preds
+	else: return None
 
 #prediction runner
 def performTargetPrediction(models):
-	prediction_results = []
+	total_pw = []
+	total_disease = []
+	prediction_results = dict()
 	pool = Pool(processes=N_cores)  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
 		sys.stdout.write(' Performing Classification on Query Molecules: %3d%%\r' % percent)
 		sys.stdout.flush()
-		prediction_results.append(result[0])
-		for p in pathway_links[result[0][0]]
+		if result is not None:
+			prediction_results[result[0]] = result[1]
+			total_pw += pathway_links.get(result[0],[])
+			try:
+				total_disease += [dis for dis in disease_links[result[0]] if disease_score[(dis,result[0])] > dgn_threshold]
+			except KeyError: pass
 	pool.close()
 	pool.join()
-	prediction_results = np.array(prediction_results).transpose()
-	return prediction_results
+	prediction_matrix = np.array([j for i,j in sorted(prediction_results.items())]).transpose()
+	return prediction_results, prediction_matrix, sorted(set(total_pw)), sorted(set(total_disease))
 
 #main
-#set up environment
-input_name1, N_cores, threshold  = 'out3.txt', int(10), 0.5
+input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
 introMessage()
 print ' Using ' + str(N_cores) + ' Cores'
-models = [modelfile for modelfile in glob.glob('models/*.pkl')][:3]
+try:
+	threshold = float(sys.argv[3])
+except ValueError:
+	print 'ERROR: Enter a valid float (2DP) for threshold'
+	quit()
+try:
+	dgn_threshold = float(sys.argv[4])
+except IndexError:
+	dgn_threshold = 0
+models = [modelfile for modelfile in glob.glob('models/*.pkl')]
 model_info = getUniprotInfo()
-disease_links, disease_info = getDisgenetInfo()
+disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()
 print ' Total Number of Classes : ' + str(len(models))
 print ' Using TPR threshold of : ' + str(threshold)
-output_name = input_name1 + '_out_target_fingerprint_' + str(threshold) + '.txt'
-out_file = open(output_name, 'w')
+print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
+out_file = open(input_name + '_out_binary_' + str(threshold) + '.txt', 'w')
+out_file2 = open(input_name + '_out_binary_pathway' + str(threshold) + '.txt', 'w')
+out_file3 = open(input_name + '_out_binary_disease' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
 
-#perform target predictions and write to file
-querymatrix1 = importQuery(input_name1)
-disease_hits = dict()
-pathway_hits = dict()
-print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix1))
-prediction_results = performTargetPrediction(models)
-for row in prediction_results:
-	out_file.write('\t'.join(map(str,row)) + '\n')
-print '\n Wrote Results to: ' + output_name
+#perform target predictions and tp fingerprints to file 
+querymatrix,smiles = importQuery(input_name)
+print ' Total Number of Query Molecules : ' + str(len(querymatrix))
+prediction_results,prediction_matrix,sorted_pws,sorted_diseases = performTargetPrediction(models)
+sorted_targets = sorted(prediction_results.keys())
+out_file.write('Compound\t' + '\t'.join(map(str,sorted_targets)) + '\n')
+out_file.write('-\t' + '\t'.join(map(str,[model_info[i][4] for i in prediction_results.keys()])) + '\n')
+out_file2.write('Compound\t' + '\t'.join(map(str,sorted_pws)) + '\n')
+out_file2.write('Compound\t' + '\t'.join(map(str,[pathway_info[i][0] for i in sorted_pws])) + '\n')
+out_file3.write('Compound\t' + '\t'.join(map(str,sorted_diseases)) + '\n')
+for i, row in enumerate(prediction_matrix):
+	#write target prediction fp
+	out_file.write(smiles[i] + '\t' + '\t'.join(map(str,row)) + '\n')
+	pred_targets = [sorted_targets[i2] for i2, pred in enumerate(row) if pred == 1]
+	#write pathway fp
+	comp_pws = Counter(sum([[pw for pw in pathway_links.get(t,[])] for t in pred_targets],[]))
+	pw_line = [smiles[i]] + [comp_pws.get(pwid,0) for pwid in sorted_pws]
+	out_file2.write('\t'.join(map(str,pw_line)) + '\n')
+	#write disease fp
+	comp_disease = Counter(sum([[dis for dis in disease_links.get(t,[]) if disease_score[(dis,t)] > dgn_threshold] for t in pred_targets],[]))
+	disease_line = [smiles[i]] + [comp_disease.get(dis,0) for dis in sorted_diseases]
+	out_file3.write('\t'.join(map(str,disease_line)) + '\n')
+print '\n Wrote Results'
 out_file.close()
-
-#write disease results to file
-processed_diseases, inp1_total, inp2_total = processDiseaseHits()
-output_name = input_name1 + '_vs_' + input_name2 + '_out_enriched_diseases_' + str(threshold) + '.txt'
-out_file = open(output_name, 'w')
-out_file.write('Disease_Name\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\t'+input_name2+'_Hits\t'+input_name2+'Precent_Hits\tRatio\tDisease_Confidence_Score\n')
-for disease, ratio in sorted(processed_diseases.items(), key=operator.itemgetter(1)):
-	inp1_stats = [disease_hits[disease][0],round(float(disease_hits[disease][0])/float(inp1_total),3)]
-	inp2_stats = [disease_hits[disease][1],round(float(disease_hits[disease][1])/float(inp2_total),3)]
-	out_file.write(disease + '\t' + '\t'.join(map(str,inp1_stats)) + '\t' + '\t'.join(map(str,inp2_stats)) + '\t' + str(ratio) + '\t' + disease_info[disease] + '\n')
-out_file.close()
-
-#write pathway results to file
-processed_pathways, inp1_total, inp2_total = processPathwayHits()
-output_name = input_name1 + '_vs_' + input_name2 + '_out_enriched_pathways_' + str(threshold) + '.txt'
-out_file = open(output_name, 'w')
-out_file.write('Pathway_Name\tPathway_Name\tSource\tClass\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\t'+input_name2+'_Hits\t'+input_name2+'Precent_Hits\tRatio\n')
-for pathway, ratio in sorted(processed_pathways.items(), key=operator.itemgetter(1)):
-	inp1_stats = [pathway_hits[pathway][0],round(float(pathway_hits[pathway][0])/float(inp1_total),3)]
-	inp2_stats = [pathway_hits[pathway][1],round(float(pathway_hits[pathway][1])/float(inp2_total),3)]
-	out_file.write(pathway + '\t' + '\t'.join(map(str,pathway_info[pathway])) + '\t' + '\t'.join(map(str,inp1_stats)) + '\t' + '\t'.join(map(str,inp2_stats)) + '\t' + str(ratio) + '\n')
-out_file.close()
+out_file2.close()
+out_file3.close()
