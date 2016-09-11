@@ -122,8 +122,10 @@ def performTargetPrediction(models):
 		if result is not None:
 			prediction_results[result[0]] = result[1]
 			total_pw += pathway_links.get(result[0],[])
+			total_pw = set(total_pw)
 			try:
 				total_disease += [dis for dis in disease_links[result[0]] if disease_score[(dis,result[0])] > dgn_threshold]
+				total_disease = set(total_disease)
 			except KeyError: pass
 	pool.close()
 	pool.join()
