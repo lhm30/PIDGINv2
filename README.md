@@ -15,12 +15,12 @@ Molecular Descriptors : 2048bit Morgan Binary Fingerprints (Rdkit) - ECFP4
 
 * Algorithm: Random Forest with 100 trees, class weight = 'balanced', sample weight = ratio Inactive:Active
 * Scaling: Platt-scaling ref: http://scikit-learn.org/stable/auto_examples/calibration/plot_calibration_curve.html
-* Targets: 3394 Targets (activities over 10)
-* Bioactivities: 13,918,879
+* Targets: 3394 Targets (with activities over 10)
+* Bioactivities: 13,918,879 (PubChem & ChEMBL21)
 * Actives:	2,089,404
 * Inactives:	11,829,475
-* Pathway information from NCBI BioSystems
-* Disease information from DisGeNET
+* Pathway information from NCBI BioSystems (http://www.ncbi.nlm.nih.gov/Structure/biosystems/docs/biosystems_about.html)
+* Disease information from DisGeNET (http://www.disgenet.org/web/DisGeNET/menu/help)
 
 All rights reserved 2016
 
@@ -93,7 +93,7 @@ INSTRUCTIONS
 
     bg_predictions.txt contains rows of target models with corresponding columns for the number of background compounds from PubChem at a given TPR threshold (to 2DP).
     
-    DisGeNET_diseases.txt contains disease data used to annotate target predictions. DisGeNET assigns a gene-disease association score to give confidence for annotations, and a DisGeNET_threshold can be supplied at runtime when annotating predictions with diseases (no threshold applied by default).
+    DisGeNET_diseases.txt contains disease data used to annotate target predictions. DisGeNET gene-disease score takes into account the number and type of sources (level of curation, organisms), and the number of publications supporting the association. The score ranges from 0 to 1 to give confidence for annotations. A DisGeNET_threshold can be supplied at runtime when annotating predictions with diseases (0.5 threshold applied by default). More info on the score here: http://disgenet.org/web/DisGeNET/menu/dbinfo#score 
         
     Example of how to run the code:
 
