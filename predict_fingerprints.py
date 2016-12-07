@@ -143,24 +143,37 @@ try:
 	dgn_threshold = float(sys.argv[4])
 except IndexError:
 	dgn_threshold = 0
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+try:
+	desired_organism = sys.argv[5]
+except IndexError:
+	desired_organism = None
+
 model_info = getUniprotInfo()
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+if desired_organism is not None:
+	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
 disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()
 print ' Total Number of Classes : ' + str(len(models))
 print ' Using TPR threshold of : ' + str(threshold)
 print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
-out_file = open(input_name + '_out_fingerprint_target_' + str(threshold) + '.txt', 'w')
-out_file2 = open(input_name + '_out_fingerprint_pathway_' + str(threshold) + '.txt', 'w')
-out_file3 = open(input_name + '_out_fingerprint_disease_' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
+if desired_organism is not None:
+	print ' Predicting for organism : ' + desired_organism
+	out_file = open(input_name + '_out_fingerprint_target_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+	out_file2 = open(input_name + '_out_fingerprint_pathway_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+	out_file3 = open(input_name + '_out_fingerprint_disease_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+else:
+	out_file = open(input_name + '_out_fingerprint_target_' + str(threshold) + '.txt', 'w')
+	out_file2 = open(input_name + '_out_fingerprint_pathway_' + str(threshold) + '.txt', 'w')
+	out_file3 = open(input_name + '_out_fingerprint_disease_' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
 
 #perform target predictions and tp fingerprints to file 
 querymatrix,smiles = importQuery(input_name)
 print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 prediction_results,prediction_matrix,sorted_pws,sorted_diseases = performTargetPrediction(models)
 sorted_targets = sorted(prediction_results.keys())
-out_file.write('Compound\t' + '\t'.join(map(str,[i for i in prediction_results.keys()])) + '\n')
-out_file.write('-\t' + '\t'.join(map(str,[model_info[i][4] for i in prediction_results.keys()])) + '\n')
+out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted(prediction_results.keys())])) + '\n')
+out_file.write('-\t' + '\t'.join(map(str,[model_info[i][4] for i in sorted(prediction_results.keys())])) + '\n')
 out_file2.write('Compound\t' + '\t'.join(map(str,sorted_pws)) + '\n')
 out_file2.write('Compound\t' + '\t'.join(map(str,[pathway_info[i][0] for i in sorted_pws])) + '\n')
 out_file3.write('Compound\t' + '\t'.join(map(str,sorted_diseases)) + '\n')
