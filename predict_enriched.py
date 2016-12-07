@@ -242,6 +242,7 @@ out_file = open(output_name2, 'w')
 out_file.write('Disease_Name\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
 for disease, ratio in sorted(processed_diseases.items(), key=operator.itemgetter(1)):
 	out_file.write(disease + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
+print '\n Wrote Results to: ' + output_name2
 out_file.close()
 
 #write pathway results to file
@@ -250,4 +251,5 @@ out_file = open(output_name3, 'w')
 out_file.write('Pathway_ID\tPathway_Name\tSource\tClass\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
 for pathway, ratio in sorted(processed_pathways.items(), key=operator.itemgetter(1)):
 	out_file.write(pathway + '\t' + '\t'.join(map(str,pathway_info[pathway])) + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
+print '\n Wrote Results to: ' + output_name3
 out_file.close()
