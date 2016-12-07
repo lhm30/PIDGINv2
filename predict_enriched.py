@@ -200,22 +200,36 @@ try:
 	dgn_threshold = float(sys.argv[4])
 except IndexError:
 	dgn_threshold = 0
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+try:
+	desired_organism = sys.argv[5]
+except IndexError:
+	desired_organism = None
 model_info = getUniprotInfo()
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+if desired_organism is not None:
+	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
 bg_preds = getBGhits(threshold)
 disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()
 print ' Total Number of Classes : ' + str(len(models))
 print ' Using TPR threshold of : ' + str(threshold)
 print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
-output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '.txt'
-out_file = open(output_name, 'w')
+if desired_organism is not None:
+	print ' Predicting for organism : ' + desired_organism
+	output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '_' + desired_organism[:3] +'.txt'
+	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt'
+	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
+else:
+	output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '.txt'
+	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
+	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '.txt'
 
 #perform target predictions and write to file
 querymatrix1 = importQuery(input_name1)
 disease_hits, pathway_hits = dict(), dict()
 print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix1))
 prediction_results = performTargetPrediction(models)
+out_file = open(output_name, 'w')
 out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
 for row in sorted(prediction_results):
 	out_file.write('\t'.join(map(str,model_info[row[1]])) + '\t' + '\t'.join(map(str, row[2:])) + '\t' + str(row[0]) + '\n')
@@ -224,8 +238,7 @@ out_file.close()
 
 #write disease results to file
 processed_diseases, inp1_total, inp2_total = processHits(disease_hits)
-output_name = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
-out_file = open(output_name, 'w')
+out_file = open(output_name2, 'w')
 out_file.write('Disease_Name\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
 for disease, ratio in sorted(processed_diseases.items(), key=operator.itemgetter(1)):
 	out_file.write(disease + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
@@ -233,8 +246,7 @@ out_file.close()
 
 #write pathway results to file
 processed_pathways, inp1_total, inp2_total = processHits(pathway_hits)
-output_name = input_name1 + '_out_enriched_pathways_' + str(threshold) + '.txt'
-out_file = open(output_name, 'w')
+out_file = open(output_name3, 'w')
 out_file.write('Pathway_ID\tPathway_Name\tSource\tClass\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
 for pathway, ratio in sorted(processed_pathways.items(), key=operator.itemgetter(1)):
 	out_file.write(pathway + '\t' + '\t'.join(map(str,pathway_info[pathway])) + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
