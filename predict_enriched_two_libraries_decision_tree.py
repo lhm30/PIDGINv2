@@ -238,12 +238,12 @@ print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
 if desired_organism is not None:
 	print ' Predicting for organism : ' + desired_organism
 	output_name = input_name1 + '_vs_' + input_name2 + '_out_enriched_targets_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
-	output_name_tree = input_name1 + '_vs_' + input_name2 + '_decision_tree_' + str(threshold) + '_' + desired_organism[:3] + '.pdf'
+	output_name_tree = input_name1 + '_vs_' + input_name2 + '_decision_tree_' + str(threshold) + '_' + desired_organism[:3] + '.jpg'
 	output_name2 = input_name1 + '_vs_' + input_name2 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt'
 	output_name3 = input_name1 + '_vs_' + input_name2 + '_out_enriched_pathways_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
 else:
 	output_name = input_name1 + '_vs_' + input_name2 + '_out_enriched_targets_' + str(threshold) + '.txt'
-	output_name_tree = input_name1 + '_vs_' + input_name2 + '_decision_tree_' + str(threshold) + '.pdf'
+	output_name_tree = input_name1 + '_vs_' + input_name2 + '_decision_tree_' + str(threshold) + '.jpg'
 	output_name2 = input_name1 + '_vs_' + input_name2 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
 	output_name3 = input_name1 + '_vs_' + input_name2 + '_out_enriched_pathways_' + str(threshold) + '.txt'
 
@@ -263,7 +263,7 @@ out_file.close()
 
 #perform decision tree function and write to file
 graph = createTree(decision_tree_matrix,decision_tree_node_label)
-graph.write_pdf(output_name_tree)
+graph.write_jpg(output_name_tree)
 print '\n Wrote Results to: ' + output_name_tree
 
 #write disease results to file
