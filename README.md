@@ -43,6 +43,10 @@ Follow these steps on Linux/OSX:
 * N.B Models are 60GB
 * N.B Step 3 may take up to 10 minutes
 
+If you would like to use the decision tree code to visualise the predictions, then run the following: 
+
+4. Open terminal in Mac/Linux and run ```conda install pydot graphviz``` 
+
 IMPORTANT
 ==========================================================================================
 
@@ -134,6 +138,16 @@ INSTRUCTIONS
 	
     ```
     python predict_fingerprints.py input.csv 30 0.5 0.3 "Homo sapiens (Human)"
+    ```
+    
+    
+9. ```predict_tree_two_files.py filename_1.csv N_cores threshold DisGeNET_threshold organism```
+    This script calculates target, pathway and disease hits enrichment and visualises the target predictions in a decision tree. The DisGeNET threshold and organism are optional. As always, organism must be enclosed by quotes ("")
+    
+    Example of how to run the code:
+	
+    ```
+    python predict_tree_two_files.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 "Homo sapiens (Human)"
     ```
 
 ==========================================================================================
