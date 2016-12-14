@@ -141,13 +141,13 @@ INSTRUCTIONS
     ```
     
     
-9. ```predict_enriched_two_libraries_decision_tree.py filename_1.csv N_cores threshold DisGeNET_threshold organism```
+9. ```predict_enriched_two_libraries_decision_tree.py filename_1.csv N_cores threshold DisGeNET_threshold organism minimum_sample_split minimum_leaf_split max_depth```
     This script calculates target, pathway and disease hits enrichment and visualises the target predictions in a decision tree (jpg file). The DisGeNET threshold and organism are optional. As always, organism must be enclosed by quotes ("")
     
     Example of how to run the code:
 	
     ```
-    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 "Homo sapiens (Human)"
+    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 "Homo sapiens (Human) 10 10 8"
     ```
 
 ==========================================================================================

@@ -193,7 +193,7 @@ def createTree(matrix,label):
 	ratio = float(len(vector)-sum(vector))/float(sum(vector))
 	sw = np.array([ratio if i == 1 else 1 for i in vector])
 	pc_10 = int(len(querymatrix1)*0.01)
-	clf = tree.DecisionTreeClassifier(min_samples_split=pc_10,min_samples_leaf=pc_10,max_depth=8)
+	clf = tree.DecisionTreeClassifier(min_samples_split=min_sampsplit,min_samples_leaf=min_leafsplit,max_depth=max_d)
 	clf.fit(matrix,vector)
 	dot_data = StringIO()  
 	tree.export_graphviz(clf, out_file=dot_data,  
@@ -226,6 +226,9 @@ try:
 	desired_organism = sys.argv[6]
 except IndexError:
 	desired_organism = None
+min_sampsplit = sys.argv[7]
+min_leafsplit = sys.argv[8]
+max_d = sys.argv[9]
 model_info = getUniprotInfo()
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
 if desired_organism is not None:
