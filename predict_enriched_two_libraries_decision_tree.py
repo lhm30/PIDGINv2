@@ -206,7 +206,12 @@ def createTree(matrix,label):
 	out_tree = dot_data.getvalue()
 	out_tree = out_tree.replace('True','Inactive').replace('False','Active').replace(' &le; 0.5', '')
 	graph = pydot.graph_from_dot_data(str(out_tree))
-	return graph
+	try:
+		graph.write_jpg(output_name_tree)
+	except AttributeError:
+		graph = pydot.graph_from_dot_data(str(out_tree))[0]
+		graph.write_jpg(output_name_tree)
+	return
 
 #main
 #set up environment
@@ -222,13 +227,14 @@ try:
 	dgn_threshold = float(sys.argv[5])
 except IndexError:
 	dgn_threshold = 0
+
+min_sampsplit = int(sys.argv[6])
+min_leafsplit = int(sys.argv[7])
+max_d = int(sys.argv[8])
 try:
-	desired_organism = sys.argv[6]
+	desired_organism = sys.argv[9]
 except IndexError:
 	desired_organism = None
-min_sampsplit = sys.argv[7]
-min_leafsplit = sys.argv[8]
-max_d = sys.argv[9]
 model_info = getUniprotInfo()
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
 if desired_organism is not None:
@@ -249,7 +255,7 @@ else:
 	output_name_tree = input_name1 + '_vs_' + input_name2 + '_decision_tree_' + str(threshold) + '.jpg'
 	output_name2 = input_name1 + '_vs_' + input_name2 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
 	output_name3 = input_name1 + '_vs_' + input_name2 + '_out_enriched_pathways_' + str(threshold) + '.txt'
-print 'Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
+print ' Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
 
 #perform target predictions and write to file
 querymatrix1 = importQuery(input_name1)
@@ -266,9 +272,8 @@ print '\n Wrote Results to: ' + output_name
 out_file.close()
 
 #perform decision tree function and write to file
-graph = createTree(decision_tree_matrix,decision_tree_node_label)
-graph.write_jpg(output_name_tree)
-print '\n Wrote Results to: ' + output_name_tree
+createTree(decision_tree_matrix,decision_tree_node_label)
+print 'Wrote Results to: ' + output_name_tree
 
 #write disease results to file
 processed_diseases, inp1_total, inp2_total = processHits(disease_hits)

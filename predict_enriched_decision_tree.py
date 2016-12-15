@@ -21,6 +21,7 @@ from multiprocessing import Pool
 import multiprocessing
 import operator
 import pydot
+from sklearn.cluster import KMeans
 multiprocessing.freeze_support()
 
 def introMessage():
@@ -196,23 +197,28 @@ def processHits(inp_dict):
 	
 #train decision tree on predictions and output graph for jpg
 def createTree(matrix,label):
-    kmeans = KMeans(n_clusters=moa_clusters, random_state=0).fit(matrix)
-    vector = map(int,kmeans.labels_)
-    pc_10 = int(len(querymatrix1)*0.01)
-    clf = tree.DecisionTreeClassifier(min_samples_split=min_sampsplit,min_samples_leaf=min_leafsplit,max_depth=max_d)
-    clf.fit(matrix,vector)
-    dot_data = StringIO()  
-    tree.export_graphviz(clf, out_file=dot_data,  
-                            feature_names=label,  
-                            class_names=map(str,list(set(sorted(kmeans.labels_)))),  
-                            filled=True, rounded=True,  
-                            special_characters=True,
-                            proportion=False,
-                            impurity=True)
-    out_tree = dot_data.getvalue()
-    out_tree = out_tree.replace('True','Inactive').replace('False','Active').replace(' &le; 0.5', '').replace('class', 'Predicted MoA')
-    graph = pydot.graph_from_dot_data(str(out_tree))[0]
-    return graph
+	kmeans = KMeans(n_clusters=moa_clusters, random_state=0).fit(matrix)
+	vector = map(int,kmeans.labels_)
+	pc_10 = int(len(querymatrix1)*0.01)
+	clf = tree.DecisionTreeClassifier(min_samples_split=min_sampsplit,min_samples_leaf=min_leafsplit,max_depth=max_d)
+	clf.fit(matrix,vector)
+	dot_data = StringIO()  
+	tree.export_graphviz(clf, out_file=dot_data,  
+							feature_names=label,  
+							class_names=map(str,list(set(sorted(kmeans.labels_)))),  
+							filled=True, rounded=True,  
+							special_characters=True,
+							proportion=False,
+							impurity=True)
+	out_tree = dot_data.getvalue()
+	out_tree = out_tree.replace('True','Inactive').replace('False','Active').replace(' &le; 0.5', '').replace('class', 'Predicted MoA')
+	graph = pydot.graph_from_dot_data(str(out_tree))
+	try:
+		graph.write_jpg(output_name_tree)
+	except AttributeError:
+		graph = pydot.graph_from_dot_data(str(out_tree))[0]
+		graph.write_jpg(output_name_tree)
+	return
 
 #main
 #set up environment
@@ -228,15 +234,15 @@ try:
 	dgn_threshold = float(sys.argv[4])
 except IndexError:
 	dgn_threshold = 0
+model_info = getUniprotInfo()
+min_sampsplit = int(sys.argv[5])
+min_leafsplit = int(sys.argv[6])
+max_d = int(sys.argv[7])
+moa_clusters = int(sys.argv[8])
 try:
-	desired_organism = sys.argv[5]
+	desired_organism = sys.argv[9]
 except IndexError:
 	desired_organism = None
-model_info = getUniprotInfo()
-min_sampsplit = int(sys.argv[6])
-min_leafsplit = int(sys.argv[7])
-max_d = int(sys.argv[8])
-moa_clusters = int(sys.argv[9])
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
 if desired_organism is not None:
 	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
@@ -257,8 +263,8 @@ else:
 	output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '.jpg'
 	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
 	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '.txt'
-print 'Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
-print 'Number of MoA clusters set to : ' + str(moa_clusters)
+print ' Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
+print ' Number of MoA clusters set to : ' + str(moa_clusters)
 
 #perform target predictions and write to file
 querymatrix1 = importQuery(input_name1)
@@ -273,9 +279,8 @@ print '\n Wrote Results to: ' + output_name
 out_file.close()
 
 #perform decision tree function and write to file
-graph = createTree(decision_tree_matrix,decision_tree_node_label)
-graph.write_jpg(output_name_tree)
-print '\n Wrote Results to: ' + output_name_tree
+createTree(decision_tree_matrix,decision_tree_node_label)
+print 'Wrote Results to: ' + output_name_tree
 
 #write disease results to file
 processed_diseases, inp1_total, inp2_total = processHits(disease_hits)
