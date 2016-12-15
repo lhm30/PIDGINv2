@@ -257,6 +257,8 @@ else:
 	output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '.jpg'
 	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
 	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '.txt'
+print 'Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
+print 'Number of MoA clusters set to : ' + str(moa_clusters)
 
 #perform target predictions and write to file
 querymatrix1 = importQuery(input_name1)
