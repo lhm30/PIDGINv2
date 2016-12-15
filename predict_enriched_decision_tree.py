@@ -97,10 +97,18 @@ def getPathwayInfo():
 		return_dict2[l[1]] = l[2:]
 	return return_dict1, return_dict2 
 
+#get pre-calculated bg hits from PubChem
+def getBGhits(threshold):
+	bg_column = int((threshold*100)+1)
+	bg_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/bg_predictions.txt').read().splitlines()]
+	bg_file.pop(0)
+	bg_predictions = {l[0] : int(l[bg_column]) for l in bg_file}
+	return bg_predictions
+
 #calculate prediction ratio for two sets of predictions
 def calcPredictionRatio(preds1,preds2):
 	preds1_percentage = float(preds1)/float(len(querymatrix1))
-	preds2_percentage = float(preds2)/float(len(querymatrix2))
+	preds2_percentage = float(preds2)/float(2000000)
 	if preds1 == 0 and preds2 == 0: return None
 	if preds1 == 0: return 999.0, round(preds1_percentage,3), round(preds2_percentage,3) 
 	if preds2 == 0: return 0.0, round(preds1_percentage,3), round(preds2_percentage,3)
@@ -113,12 +121,11 @@ def doTargetPrediction(pickled_model_name):
 	uniprot = pickled_model_name.split('/')[-1][:-4]
 	probs1 = map(int, clf.predict_proba(querymatrix1)[:,1] > threshold)
 	preds1 = sum(probs1)
-	probs2 = map(int, clf.predict_proba(querymatrix2)[:,1] > threshold)
-	preds2 = sum(probs2)
-	oddsratio, pvalue = stats.fisher_exact([[preds2,len(querymatrix2)-preds2],[preds1,len(querymatrix1)-preds1]])
+	preds2 = bg_preds[uniprot]
+	oddsratio, pvalue = stats.fisher_exact([[preds2,2000000-preds2],[preds1,len(querymatrix1)-preds1]])
 	try:
 		ratio, preds1_percentage, preds2_percentage = calcPredictionRatio(preds1,preds2)
-		return ratio, uniprot, preds1, preds1_percentage, preds2, preds2_percentage, oddsratio, pvalue, probs1 + probs2
+		return ratio, uniprot, preds1, preds1_percentage, preds2, preds2_percentage, oddsratio, pvalue, probs1
 	except TypeError: return None
 
 #prediction runner
@@ -142,7 +149,7 @@ def performTargetPrediction(models):
 	pool.join()
 	decision_tree_matrix = np.array(decision_tree_matrix,dtype=np.uint8).transpose()
 	return prediction_results, decision_tree_matrix, decision_tree_node_label
-	
+
 #update counts for each pathway/disease that is hit by predictions	
 def updateHits(links,hits,uniprot,hit1,hit2):
 	try:
@@ -157,7 +164,7 @@ def updateHits(links,hits,uniprot,hit1,hit2):
 				hits[idx] = np.array([hit1,hit2])
 	except KeyError: return
 	return
-	
+
 #worker for the processHits to calculate the prediction ratio, Chi-square test in parallel
 def doHitProcess(inp):
 	idx, hits, n_f1_hits, n_f2_hits = inp
@@ -186,53 +193,51 @@ def processHits(inp_dict):
 		if result is None: continue
 		out_dict[result[0]] = result[1:]
 	return out_dict, n_f1_hits, n_f2_hits
-
-#train decision tree on predictions and output graph for pdf
-def createTree(matrix,label):	
-	vector = [1] * len(querymatrix1) + [0] * len(querymatrix2)
-	ratio = float(len(vector)-sum(vector))/float(sum(vector))
-	sw = np.array([ratio if i == 1 else 1 for i in vector])
-	pc_10 = int(len(querymatrix1)*0.01)
-	clf = tree.DecisionTreeClassifier(min_samples_split=min_sampsplit,min_samples_leaf=min_leafsplit,max_depth=max_d)
-	clf.fit(matrix,vector)
-	dot_data = StringIO()  
-	tree.export_graphviz(clf, out_file=dot_data,  
-							feature_names=label,  
-							class_names=['File2','File1'],  
-							filled=True, rounded=True,  
-							special_characters=True,
-							proportion=False,
-							impurity=True)
-	out_tree = dot_data.getvalue()
-	out_tree = out_tree.replace('True','Inactive').replace('False','Active').replace(' &le; 0.5', '')
-	graph = pydot.graph_from_dot_data(str(out_tree))
-	return graph
+	
+#train decision tree on predictions and output graph for jpg
+def createTree(matrix,label):
+    kmeans = KMeans(n_clusters=moa_clusters, random_state=0).fit(matrix)
+    vector = map(int,kmeans.labels_)
+    pc_10 = int(len(querymatrix1)*0.01)
+    clf = tree.DecisionTreeClassifier(min_samples_split=min_sampsplit,min_samples_leaf=min_leafsplit,max_depth=max_d)
+    clf.fit(matrix,vector)
+    dot_data = StringIO()  
+    tree.export_graphviz(clf, out_file=dot_data,  
+                            feature_names=label,  
+                            class_names=map(str,list(set(sorted(kmeans.labels_)))),  
+                            filled=True, rounded=True,  
+                            special_characters=True,
+                            proportion=False,
+                            impurity=True)
+    out_tree = dot_data.getvalue()
+    out_tree = out_tree.replace('True','Inactive').replace('False','Active').replace(' &le; 0.5', '').replace('class', 'Predicted MoA')
+    graph = pydot.graph_from_dot_data(str(out_tree))[0]
+    return graph
 
 #main
 #set up environment
-input_name1, input_name2, N_cores  = sys.argv[1], sys.argv[2], int(sys.argv[3])
+input_name1, N_cores  = sys.argv[1], int(sys.argv[2])
 introMessage()
 print ' Using ' + str(N_cores) + ' Cores'
 try:
-	threshold = float(sys.argv[4])
+	threshold = float(sys.argv[3])
 except ValueError:
 	print 'ERROR: Enter a valid float (2DP) for threshold'
 	quit()
 try:
-	dgn_threshold = float(sys.argv[5])
+	dgn_threshold = float(sys.argv[4])
 except IndexError:
 	dgn_threshold = 0
 try:
-	desired_organism = sys.argv[6]
+	desired_organism = sys.argv[5]
 except IndexError:
 	desired_organism = None
-min_sampsplit = sys.argv[7]
-min_leafsplit = sys.argv[8]
-max_d = sys.argv[9]
 model_info = getUniprotInfo()
+moa_clusters = int(sys.argv[6])
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
 if desired_organism is not None:
 	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
+bg_preds = getBGhits(threshold)
 disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()
 print ' Total Number of Classes : ' + str(len(models))
@@ -240,26 +245,23 @@ print ' Using TPR threshold of : ' + str(threshold)
 print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
 if desired_organism is not None:
 	print ' Predicting for organism : ' + desired_organism
-	output_name = input_name1 + '_vs_' + input_name2 + '_out_enriched_targets_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
-	output_name_tree = input_name1 + '_vs_' + input_name2 + '_decision_tree_' + str(threshold) + '_' + desired_organism[:3] + '.jpg'
-	output_name2 = input_name1 + '_vs_' + input_name2 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt'
-	output_name3 = input_name1 + '_vs_' + input_name2 + '_out_enriched_pathways_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
+	output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '_' + desired_organism[:3] +'.txt'
+	output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '_' + desired_organism[:3] + '.jpg'
+	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt'
+	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
 else:
-	output_name = input_name1 + '_vs_' + input_name2 + '_out_enriched_targets_' + str(threshold) + '.txt'
-	output_name_tree = input_name1 + '_vs_' + input_name2 + '_decision_tree_' + str(threshold) + '.jpg'
-	output_name2 = input_name1 + '_vs_' + input_name2 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
-	output_name3 = input_name1 + '_vs_' + input_name2 + '_out_enriched_pathways_' + str(threshold) + '.txt'
-print 'Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
+	output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '.txt'
+	output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '.jpg'
+	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
+	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '.txt'
 
 #perform target predictions and write to file
 querymatrix1 = importQuery(input_name1)
-querymatrix2 = importQuery(input_name2)
 disease_hits, pathway_hits = dict(), dict()
 print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix1))
-print ' Total Number of Molecules in ' +input_name2+ ' : ' + str(len(querymatrix2))
 prediction_results, decision_tree_matrix, decision_tree_node_label = performTargetPrediction(models)
 out_file = open(output_name, 'w')
-out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\t'+input_name2+'_Hits\t'+input_name2+'_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
+out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
 for row in sorted(prediction_results):
 	out_file.write('\t'.join(map(str,model_info[row[1]])) + '\t' + '\t'.join(map(str, row[2:])) + '\t' + str(row[0]) + '\n')
 print '\n Wrote Results to: ' + output_name
@@ -273,7 +275,7 @@ print '\n Wrote Results to: ' + output_name_tree
 #write disease results to file
 processed_diseases, inp1_total, inp2_total = processHits(disease_hits)
 out_file = open(output_name2, 'w')
-out_file.write('Disease_Name\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\t'+input_name2+'_Hits\t'+input_name2+'Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
+out_file.write('Disease_Name\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
 for disease, ratio in sorted(processed_diseases.items(), key=operator.itemgetter(1)):
 	out_file.write(disease + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
 print '\n Wrote Results to: ' + output_name2
@@ -282,7 +284,7 @@ out_file.close()
 #write pathway results to file
 processed_pathways, inp1_total, inp2_total = processHits(pathway_hits)
 out_file = open(output_name3, 'w')
-out_file.write('Pathway_Name\tPathway_Name\tSource\tClass\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\t'+input_name2+'_Hits\t'+input_name2+'Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
+out_file.write('Pathway_ID\tPathway_Name\tSource\tClass\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
 for pathway, ratio in sorted(processed_pathways.items(), key=operator.itemgetter(1)):
 	out_file.write(pathway + '\t' + '\t'.join(map(str,pathway_info[pathway])) + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
 print '\n Wrote Results to: ' + output_name3
