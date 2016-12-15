@@ -233,7 +233,10 @@ try:
 except IndexError:
 	desired_organism = None
 model_info = getUniprotInfo()
-moa_clusters = int(sys.argv[6])
+min_sampsplit = int(sys.argv[6])
+min_leafsplit = int(sys.argv[7])
+max_d = int(sys.argv[8])
+moa_clusters = int(sys.argv[9])
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
 if desired_organism is not None:
 	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
