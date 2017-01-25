@@ -64,7 +64,7 @@ def importQuery(in_file):
 #get info for uniprots
 def getUniprotInfo():
 	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
-	return_dict = {l[0] : l[0:5] for l in model_info}
+	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
 #get info for diseases
@@ -225,7 +225,7 @@ print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix
 print ' Total Number of Molecules in ' +input_name2+ ' : ' + str(len(querymatrix2))
 prediction_results = performTargetPrediction(models)
 out_file = open(output_name, 'w')
-out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\t'+input_name2+'_Hits\t'+input_name2+'_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
+out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t\tPDB_ID\tDisGeNET_Diseases_0.06\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\t'+input_name2+'_Hits\t'+input_name2+'_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
 for row in sorted(prediction_results):
 	out_file.write('\t'.join(map(str,model_info[row[1]])) + '\t' + '\t'.join(map(str, row[2:])) + '\t' + str(row[0]) + '\n')
 print '\n Wrote Results to: ' + output_name
