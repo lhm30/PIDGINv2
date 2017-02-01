@@ -127,10 +127,9 @@ def open_Model(mod):
 def doTargetPrediction(pickled_model_name):
 	mod = pickled_model_name.split('/')[-1].split('.')[0]
 	clf = open_Model(mod)
-	uniprot = pickled_model_name.split('/')[-1][:-4]
 	probs1 = map(int, clf.predict_proba(querymatrix1)[:,1] > threshold)
 	preds1 = sum(probs1)
-	preds2 = bg_preds[uniprot]
+	preds2 = bg_preds[mod]
 	oddsratio, pvalue = stats.fisher_exact([[preds2,2000000-preds2],[preds1,len(querymatrix1)-preds1]])
 	try:
 		ratio, preds1_percentage, preds2_percentage = calcPredictionRatio(preds1,preds2)
@@ -253,7 +252,7 @@ except IndexError:
 	desired_organism = None
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 if desired_organism is not None:
-	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
+	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]] == desired_organism]
 bg_preds = getBGhits(threshold)
 disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()

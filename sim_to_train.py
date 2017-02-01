@@ -70,7 +70,7 @@ def getUniprotInfo():
 
 #prediction worker	
 def doSimSearch(pickled_model_name):
-	mod = pickled_model_name.split('/')[-1][:-4]
+	mod = pickled_model_name.split('/')[-1].split('.')[0]
 	try:
 		with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/actives/' + mod + '.smi.zip', 'r') as zfile:
 			comps = [i.split('\t') for i in zfile.open(mod + '.smi', 'r').read().splitlines()]
