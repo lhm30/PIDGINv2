@@ -38,19 +38,18 @@ Follow these steps on Linux/OSX:
  
 1. ```Download and install Anaconda2 for Python 2.7 from https://www.continuum.io/downloads```
 2. Open terminal in Mac/Linux and run ```conda install -c https://conda.anaconda.org/rdkit rdkit``` 
-3. ```git clone https://github.com/lhm30/PIDGINv2/;cd PIDGINv2;curl -L -o temp.zip https://www.dropbox.com/s/aivz5pnyrl4c1rx/model.zip?dl=0;unzip temp.zip;rm temp.zip```
+3. Now run: conda install scikit-learn=0.17 (PIDGINv2 uses Scikit-learn v17)
+4. Navigate the directory you wish to install PIDGINv2 and in Mac/Linux terminal run ```git clone https://github.com/lhm30/PIDGINv2/``` (recommended) or download/extract the zip from GitHub webpage
+5. Download and unzip models.zip into the PIDGINv2 directory from here: ```http://tinyurl.com/zhv3m5n``` (leave .pkl.zip files compressed)
+6. If you would like decision tree capabilities, open terminal in Mac/Linux and run ```conda install pydot graphviz``` 
 
-* N.B Models are 60GB
-* N.B Step 3 may take up to 10 minutes
+* N.B Step 5 may take up to 10 minutes
 
-If you would like to use the decision tree code to visualise the predictions, then run the following: 
-
-4. Open terminal in Mac/Linux and run ```conda install pydot graphviz``` 
 
 IMPORTANT
 ==========================================================================================
 
-*	You MUST run ```curl -L -o temp.zip https://www.dropbox.com/s/aivz5pnyrl4c1rx/model.zip?dl=0;unzip temp.zip;rm temp.zip``` in terminal/cmd prompt to download the models before first run!
+*	You MUST download the models before running!
 *	The program recognises line-separated SMILES in .csv format
 *	Molecules Should be standardized before running models
 *	ChemAxon Standardizer should be used for structure canonicalization and is free for academic use at (http://www.chemaxon.com)
