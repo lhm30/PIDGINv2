@@ -11,6 +11,7 @@ from rdkit.Chem import AllChem
 from sklearn import tree
 from sklearn.externals.six import StringIO
 import cPickle
+import zipfile
 import glob
 import os
 import sys
@@ -250,7 +251,7 @@ try:
 	desired_organism = sys.argv[9]
 except IndexError:
 	desired_organism = None
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 if desired_organism is not None:
 	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
 bg_preds = getBGhits(threshold)

@@ -8,9 +8,9 @@
 #libraries
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from sklearn.naive_bayes import BernoulliNB
 import cPickle
 import glob
+import zipfile
 import os
 import sys
 import math
@@ -112,7 +112,7 @@ try:
 except ValueError:
 	print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
 	quit()
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 model_info = getUniprotInfo()
 print ' Total Number of Classes : ' + str(len(models))
 print ' Using TPR threshold of : ' + str(threshold)

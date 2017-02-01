@@ -8,8 +8,8 @@
 #libraries
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from sklearn.naive_bayes import BernoulliNB
 import cPickle
+import zipfile
 import glob
 import os
 import sys
@@ -106,7 +106,7 @@ N_cores = int(sys.argv[2])
 introMessage()
 print ' Predicting Targets for ' + input_name
 print ' Using ' + str(N_cores) + ' Cores'
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 model_info = getUniprotInfo()
 print ' Total Number of Classes : ' + str(len(models))
 output_name = input_name + '_out_raw.txt'

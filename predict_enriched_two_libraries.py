@@ -8,8 +8,8 @@
 #libraries
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from sklearn.naive_bayes import BernoulliNB
 import cPickle
+import zipfile
 import glob
 import os
 import sys
@@ -205,7 +205,7 @@ try:
 except IndexError:
 	desired_organism = None
 model_info = getUniprotInfo()
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 if desired_organism is not None:
 	models = [mod for mod in models if model_info[mod.split('/')[-1][:-4]][4] == desired_organism]
 disease_links, disease_score = getDisgenetInfo()

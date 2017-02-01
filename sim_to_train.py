@@ -10,6 +10,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
 import cPickle
+import zipfile
 import glob
 import os
 import sys
@@ -17,7 +18,6 @@ import math
 import numpy as np
 from multiprocessing import Pool
 import multiprocessing
-import zipfile
 multiprocessing.freeze_support()
 
 def introMessage():
@@ -115,7 +115,7 @@ N_cores = int(sys.argv[2])
 introMessage()
 print ' Calculating Near-Neighbors for ' + input_name
 print ' Using ' + str(N_cores) + ' Cores'
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 model_info = getUniprotInfo()
 print ' Total Number of Classes : ' + str(len(models))
 output_name = input_name + '_out_similarity_details.txt'
