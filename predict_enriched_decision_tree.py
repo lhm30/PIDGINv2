@@ -67,7 +67,7 @@ def importQuery(in_file):
 #get info for uniprots
 def getUniprotInfo():
 	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
-	return_dict = {l[0] : l[0:7] for l in model_info}
+	return_dict = {l[0] : l[0:8] for l in model_info}
 	return return_dict
 
 #get info for diseases
@@ -115,10 +115,17 @@ def calcPredictionRatio(preds1,preds2):
 	if preds2 == 0: return 0.0, round(preds1_percentage,3), round(preds2_percentage,3)
 	return round(preds2_percentage/preds1_percentage,3), round(preds1_percentage,3), round(preds2_percentage,3)
 
+#unzip a pkl model
+def open_Model(mod):
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+		with zfile.open(mod + '.pkl', 'r') as fid:
+			clf = cPickle.load(fid)
+	return clf
+
 #prediction worker to predict targets and calculate Fisher's test in parallel
 def doTargetPrediction(pickled_model_name):
-	with open(pickled_model_name, 'rb') as fid:
-		clf = cPickle.load(fid)
+	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	clf = open_Model(mod)
 	uniprot = pickled_model_name.split('/')[-1][:-4]
 	probs1 = map(int, clf.predict_proba(querymatrix1)[:,1] > threshold)
 	preds1 = sum(probs1)
@@ -126,7 +133,7 @@ def doTargetPrediction(pickled_model_name):
 	oddsratio, pvalue = stats.fisher_exact([[preds2,2000000-preds2],[preds1,len(querymatrix1)-preds1]])
 	try:
 		ratio, preds1_percentage, preds2_percentage = calcPredictionRatio(preds1,preds2)
-		return ratio, uniprot, preds1, preds1_percentage, preds2, preds2_percentage, oddsratio, pvalue, probs1
+		return ratio, mod, preds1, preds1_percentage, preds2, preds2_percentage, oddsratio, pvalue, probs1
 	except TypeError: return None
 
 #prediction runner
@@ -272,7 +279,7 @@ disease_hits, pathway_hits = dict(), dict()
 print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix1))
 prediction_results, decision_tree_matrix, decision_tree_node_label = performTargetPrediction(models)
 out_file = open(output_name, 'w')
-out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t\tPDB_ID\tDisGeNET_Diseases_0.06\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
+out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
 for row in sorted(prediction_results):
 	out_file.write('\t'.join(map(str,model_info[row[1]])) + '\t' + '\t'.join(map(str, row[2:])) + '\t' + str(row[0]) + '\n')
 print '\n Wrote Results to: ' + output_name

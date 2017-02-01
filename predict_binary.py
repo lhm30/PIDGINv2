@@ -67,17 +67,24 @@ def importQuery(in_file):
 #get info for uniprots
 def getUniprotInfo():
 	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
-	return_dict = {l[0] : l[0:7] for l in model_info}
+	return_dict = {l[0] : l[0:8] for l in model_info}
 	return return_dict
+
+#unzip a pkl model
+def open_Model(mod):
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+		with zfile.open(mod + '.pkl', 'r') as fid:
+			clf = cPickle.load(fid)
+	return clf
 
 #prediction worker	
 def doTargetPrediction(pickled_model_name):
-	with open(pickled_model_name, 'rb') as fid:
-		clf = cPickle.load(fid)
+	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	clf = open_Model(mod)
 	probs = clf.predict_proba(querymatrix)[:,1]
 	preds = map(int,probs > threshold)
 	if sum(preds) > 0:
-		return pickled_model_name.split('/')[-1][:-4],preds
+		return mod,preds
 	else: return None
 
 #prediction runner
@@ -114,7 +121,7 @@ out_file = open(output_name, 'w')
 querymatrix,smiles = importQuery(input_name)
 print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 prediction_results = performTargetPrediction(models)
-out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\t\tPDB_ID\tDisGeNET_Diseases_0.06\t' + '\t'.join(map(str,smiles)) + '\n')
+out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\tChEMBL_First_Published\t' + '\t'.join(map(str,smiles)) + '\n')
 for row in sorted(prediction_results):
 	out_file.write('\t'.join(map(str,model_info[row[0]])) + '\t' + '\t'.join(map(str,row[1])) + '\n')
 print '\n Wrote Results to: ' + output_name

@@ -98,14 +98,28 @@ def getPathwayInfo():
 		return_dict2[l[1]] = l[2:]
 	return return_dict1, return_dict2 
 
+#unzip a pkl model
+def open_Model(mod):
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+		with zfile.open(mod + '.pkl', 'r') as fid:
+			clf = cPickle.load(fid)
+	return clf
+	
+#unzip a pkl model
+def open_Model(mod):
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+		with zfile.open(mod + '.pkl', 'r') as fid:
+			clf = cPickle.load(fid)
+	return clf
+
 #prediction worker	
 def doTargetPrediction(pickled_model_name):
-	with open(pickled_model_name, 'rb') as fid:
-		clf = cPickle.load(fid)
+	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	clf = open_Model(mod)
 	probs = clf.predict_proba(querymatrix)[:,1]
 	preds = map(int,probs > threshold)
 	if sum(preds) > 0:
-		return pickled_model_name.split('/')[-1][:-4],preds
+		return mod,preds
 	else: return None
 
 #prediction runner

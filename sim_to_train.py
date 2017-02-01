@@ -65,7 +65,7 @@ def importQuery(in_file):
 #get info for uniprots
 def getUniprotInfo():
 	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
-	return_dict = {l[0] : l[0:5] for l in model_info}
+	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
 #prediction worker	
@@ -94,11 +94,17 @@ def performSimSearch(models):
 	sims_results = []
 	pool = Pool(processes=N_cores)  # set up resources
 	jobs = pool.imap_unordered(doSimSearch, models)
+	out_file2.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t' + '\t'.join(map(str,smiles)) + '\n')
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
 		sys.stdout.write(' Calculating Sims for Query Molecules: %3d%%\r' % percent)
 		sys.stdout.flush()
-		if result is not None: sims_results += result
+		if result is not None:
+			sims_results += result
+			out_file2.write('\t'.join(map(str,model_info[result[0][1]])))
+			for sim in result:
+				out_file2.write('\t' + str(round(sim[0],3)))
+			out_file2.write('\n')
 	pool.close()
 	pool.join()
 	return sims_results
@@ -112,13 +118,16 @@ print ' Using ' + str(N_cores) + ' Cores'
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.pkl')]
 model_info = getUniprotInfo()
 print ' Total Number of Classes : ' + str(len(models))
-output_name = input_name + '_similarities.txt'
+output_name = input_name + '_out_similarity_details.txt'
+output_name2 = input_name + '_out_similarity_matrix.txt'
 out_file = open(output_name, 'w')
+out_file2 = open(output_name2, 'w')
 querymatrix,smiles = importQuery(input_name)
 print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 sims_results = performSimSearch(models)
 out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tNear_Neighbor_ChEMBLID\tNear_Neighbor_Smiles\tNear_Neighbor_Bioactive_organism\tNear_Neighbor_conf_score\tNN_activity\tNN_Units\tInput_Compound\tSimilarity\n')
 for row in sorted(sims_results,reverse=True):
-	out_file.write('\t'.join(map(str,model_info[row[1]])) + '\t' + '\t'.join(map(str,row[2:])) + '\t' + str(row[0]) + '\n')
+	out_file.write('\t'.join(map(str,model_info[row[1]][:5])) + '\t' + '\t'.join(map(str,row[2:])) + '\t' + str(row[0]) + '\n')
 print '\n Wrote Results to: ' + output_name
+print ' Wrote Results to: ' + output_name2
 out_file.close()
