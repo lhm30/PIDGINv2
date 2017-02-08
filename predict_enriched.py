@@ -213,7 +213,7 @@ except IndexError:
 model_info = getUniprotInfo()
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 if desired_organism is not None:
-	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]] == desired_organism]
+	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]][4] == desired_organism]
 bg_preds = getBGhits(threshold)
 disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()

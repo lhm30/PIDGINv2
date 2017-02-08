@@ -165,7 +165,7 @@ except IndexError:
 model_info = getUniprotInfo()
 models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 if desired_organism is not None:
-	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]] == desired_organism]
+	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]][4] == desired_organism]
 disease_links, disease_score = getDisgenetInfo()
 pathway_links, pathway_info = getPathwayInfo()
 print ' Total Number of Classes : ' + str(len(models))
@@ -173,13 +173,13 @@ print ' Using TPR threshold of : ' + str(threshold)
 print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
 if desired_organism is not None:
 	print ' Predicting for organism : ' + desired_organism
-	out_file = open(input_name + '_out_fingerprint_target_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
-	out_file2 = open(input_name + '_out_fingerprint_pathway_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
-	out_file3 = open(input_name + '_out_fingerprint_disease_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+	out_file = open(input_name + '_out_percomp_target_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+	out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+	out_file3 = open(input_name + '_out_percomp_disease_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt', 'w')
 else:
-	out_file = open(input_name + '_out_fingerprint_target_' + str(threshold) + '.txt', 'w')
-	out_file2 = open(input_name + '_out_fingerprint_pathway_' + str(threshold) + '.txt', 'w')
-	out_file3 = open(input_name + '_out_fingerprint_disease_' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
+	out_file = open(input_name + '_out_percomp_target_' + str(threshold) + '.txt', 'w')
+	out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '.txt', 'w')
+	out_file3 = open(input_name + '_out_percomp_disease_' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
 
 #perform target predictions and tp fingerprints to file 
 querymatrix,smiles = importQuery(input_name)
