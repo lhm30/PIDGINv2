@@ -79,7 +79,9 @@ def open_Model(mod):
 
 #prediction worker	
 def doTargetPrediction(pickled_model_name):
-	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	mod = pickled_model_name.split(sep)[-1].split('.')[0]
 	clf = open_Model(mod)
 	probs = clf.predict_proba(querymatrix)[:,1]
 	probs = probs.round(2)
@@ -88,7 +90,7 @@ def doTargetPrediction(pickled_model_name):
 #prediction runner
 def performTargetPrediction(models):
 	prediction_results = dict()
-	pool = Pool(processes=N_cores)  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,))  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
@@ -100,35 +102,41 @@ def performTargetPrediction(models):
 	prediction_matrix = np.array([j for i,j in sorted(prediction_results.items())]).transpose()
 	return sorted(prediction_results.keys()), prediction_matrix
 
+#initializer for the pool
+def initPool(querymatrix_):
+	global querymatrix
+	querymatrix = querymatrix_
+
 #main
-input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
-introMessage()
-print ' Using ' + str(N_cores) + ' Cores'
-try:
-	desired_organism = sys.argv[3]
-except IndexError:
-	desired_organism = None
+if __name__ == '__main__':
+	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
+	introMessage()
+	print ' Using ' + str(N_cores) + ' Cores'
+	try:
+		desired_organism = sys.argv[3]
+	except IndexError:
+		desired_organism = None
 
-model_info = getUniprotInfo()
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
-if desired_organism is not None:
-	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]][4] == desired_organism]
-print ' Total Number of Classes : ' + str(len(models))
-if desired_organism is not None:
-	print ' Predicting for organism : ' + desired_organism
-	out_name = input_name + '_out_target_fingerprints_' + desired_organism[:3] + '.txt'
-	out_file = open(out_name, 'w')
-else:
-	out_name = input_name + '_out_target_fingerprints_' + '.txt'
-	out_file = open(out_name, 'w')
+	model_info = getUniprotInfo()
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	if desired_organism is not None:
+		models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]][4] == desired_organism]
+	print ' Total Number of Classes : ' + str(len(models))
+	if desired_organism is not None:
+		print ' Predicting for organism : ' + desired_organism
+		out_name = input_name + '_out_target_fingerprints_' + desired_organism[:3] + '.txt'
+		out_file = open(out_name, 'w')
+	else:
+		out_name = input_name + '_out_target_fingerprints_' + '.txt'
+		out_file = open(out_name, 'w')
 
-#perform target predictions and tp fingerprints to file 
-querymatrix,smiles = importQuery(input_name)
-print ' Total Number of Query Molecules : ' + str(len(querymatrix))
-sorted_targets,prediction_matrix = performTargetPrediction(models)
-out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted_targets])) + '\n')
-for i, row in enumerate(prediction_matrix):
-	#write target prediction fp
-	out_file.write(smiles[i] + '\t' + '\t'.join(map(str,row)) + '\n')
-print '\n Wrote Results to: ' + out_name
-out_file.close()
+	#perform target predictions and tp fingerprints to file 
+	querymatrix,smiles = importQuery(input_name)
+	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
+	sorted_targets,prediction_matrix = performTargetPrediction(models)
+	out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted_targets])) + '\n')
+	for i, row in enumerate(prediction_matrix):
+		#write target prediction fp
+		out_file.write(smiles[i] + '\t' + '\t'.join(map(str,row)) + '\n')
+	print '\n Wrote Results to: ' + out_name
+	out_file.close()
