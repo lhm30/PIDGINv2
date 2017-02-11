@@ -91,7 +91,7 @@ def doTargetPrediction(pickled_model_name):
 #prediction runner
 def performTargetPrediction(models):
 	prediction_results = []
-	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,))  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,threshold,))  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
@@ -103,9 +103,10 @@ def performTargetPrediction(models):
 	return prediction_results
 
 #initializer for the pool
-def initPool(querymatrix_):
-	global querymatrix
+def initPool(querymatrix_, threshold_):
+	global querymatrix, threshold
 	querymatrix = querymatrix_
+	threshold = threshold_
 
 #main
 if __name__ == '__main__':
