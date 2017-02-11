@@ -136,7 +136,7 @@ def doTargetPrediction(pickled_model_name):
 #prediction runner
 def performTargetPrediction(models):
 	prediction_results = []
-	pool = Pool(processes=N_cores)  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix1,threshold,bg_preds))  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
@@ -184,7 +184,7 @@ def processHits(inp_dict):
 	n_f1_hits = total_hits[0]
 	n_f2_hits = total_hits[1]
 	tasks = [[idx,hits,n_f1_hits,n_f2_hits] for idx, hits in inp_dict.iteritems()]
-	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix1,))  # set up resources
+	pool = Pool(processes=N_cores)  # set up resources
 	jobs = pool.imap_unordered(doHitProcess, tasks)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(tasks)))*100 + 1
@@ -195,9 +195,11 @@ def processHits(inp_dict):
 	return out_dict, n_f1_hits, n_f2_hits
 
 #initializer for the pool
-def initPool(querymatrix1_):
-	global querymatrix1
+def initPool(querymatrix1_, threshold_, bg_preds_):
+	global querymatrix1, threshold, bg_preds
 	querymatrix1 = querymatrix1_
+	threshold = threshold_
+	bg_preds = bg_preds_
 
 #main
 #set up environment
