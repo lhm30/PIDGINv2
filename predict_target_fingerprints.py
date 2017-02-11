@@ -120,7 +120,9 @@ if __name__ == '__main__':
 	model_info = getUniprotInfo()
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 	if desired_organism is not None:
-		models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]][4] == desired_organism]
+		if os.name == 'nt': sep = '\\'
+		else: sep = '/'
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 	print ' Total Number of Classes : ' + str(len(models))
 	if desired_organism is not None:
 		print ' Predicting for organism : ' + desired_organism
