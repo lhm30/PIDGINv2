@@ -17,7 +17,6 @@ import math
 import numpy as np
 from multiprocessing import Pool
 import multiprocessing
-multiprocessing.freeze_support()
 
 def introMessage():
 	print '=============================================================================================='
@@ -79,7 +78,9 @@ def open_Model(mod):
 
 #prediction worker	
 def doTargetPrediction(pickled_model_name):
-	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	mod = pickled_model_name.split(sep)[-1].split('.')[0]
 	clf = open_Model(mod)
 	probs = clf.predict_proba(querymatrix)[:,1]
 	preds = map(int,probs > threshold)
@@ -90,7 +91,7 @@ def doTargetPrediction(pickled_model_name):
 #prediction runner
 def performTargetPrediction(models):
 	prediction_results = []
-	pool = Pool(processes=N_cores)  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,))  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
@@ -101,28 +102,34 @@ def performTargetPrediction(models):
 	pool.join()
 	return prediction_results
 
+#initializer for the pool
+def initPool(querymatrix_):
+	global querymatrix
+	querymatrix = querymatrix_
+
 #main
-input_name = sys.argv[1]
-N_cores = int(sys.argv[2])
-introMessage()
-print ' Predicting Targets for ' + input_name
-print ' Using ' + str(N_cores) + ' Cores'
-try:
-	threshold = float(sys.argv[3])
-except ValueError:
-	print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
-	quit()
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
-model_info = getUniprotInfo()
-print ' Total Number of Classes : ' + str(len(models))
-print ' Using TPR threshold of : ' + str(threshold)
-output_name = input_name + '_out_binary_' + str(threshold) + '.txt'
-out_file = open(output_name, 'w')
-querymatrix,smiles = importQuery(input_name)
-print ' Total Number of Query Molecules : ' + str(len(querymatrix))
-prediction_results = performTargetPrediction(models)
-out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\tChEMBL_First_Published\t' + '\t'.join(map(str,smiles)) + '\n')
-for row in sorted(prediction_results):
-	out_file.write('\t'.join(map(str,model_info[row[0]])) + '\t' + '\t'.join(map(str,row[1])) + '\n')
-print '\n Wrote Results to: ' + output_name
-out_file.close()
+if __name__ == '__main__':
+	input_name = sys.argv[1]
+	N_cores = int(sys.argv[2])
+	introMessage()
+	print ' Predicting Targets for ' + input_name
+	print ' Using ' + str(N_cores) + ' Cores'
+	try:
+		threshold = float(sys.argv[3])
+	except ValueError:
+		print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
+		quit()
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	model_info = getUniprotInfo()
+	print ' Total Number of Classes : ' + str(len(models))
+	print ' Using TPR threshold of : ' + str(threshold)
+	output_name = input_name + '_out_binary_' + str(threshold) + '.txt'
+	out_file = open(output_name, 'w')
+	querymatrix,smiles = importQuery(input_name)
+	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
+	prediction_results = performTargetPrediction(models)
+	out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\tChEMBL_First_Published\t' + '\t'.join(map(str,smiles)) + '\n')
+	for row in sorted(prediction_results):
+		out_file.write('\t'.join(map(str,model_info[row[0]])) + '\t' + '\t'.join(map(str,row[1])) + '\n')
+	print '\n Wrote Results to: ' + output_name
+	out_file.close()
