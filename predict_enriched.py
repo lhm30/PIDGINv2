@@ -184,7 +184,7 @@ def processHits(inp_dict):
 	n_f1_hits = total_hits[0]
 	n_f2_hits = total_hits[1]
 	tasks = [[idx,hits,n_f1_hits,n_f2_hits] for idx, hits in inp_dict.iteritems()]
-	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,))  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix1,))  # set up resources
 	jobs = pool.imap_unordered(doHitProcess, tasks)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(tasks)))*100 + 1
@@ -195,9 +195,9 @@ def processHits(inp_dict):
 	return out_dict, n_f1_hits, n_f2_hits
 
 #initializer for the pool
-def initPool(querymatrix_):
-	global querymatrix
-	querymatrix = querymatrix_
+def initPool(querymatrix1_):
+	global querymatrix1
+	querymatrix1 = querymatrix1_
 
 #main
 #set up environment
