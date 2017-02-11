@@ -15,10 +15,7 @@ Molecular Descriptors : 2048bit Morgan Binary Fingerprints (Rdkit) - ECFP4
 
 * Algorithm: Random Forest with 100 trees, class weight = 'balanced', sample weight = ratio Inactive:Active
 * Scaling: Platt-scaling ref: http://scikit-learn.org/stable/auto_examples/calibration/plot_calibration_curve.html
-* 
-
-
-s: 3394 Targets (with activities over 10)
+* Targets: 3394 Targets (with activities over 10)
 * Bioactivities: 13,918,879 (PubChem & ChEMBL21)
 * Actives:	2,089,404
 * Inactives:	11,829,475
