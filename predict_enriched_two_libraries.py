@@ -113,7 +113,9 @@ def open_Model(mod):
 
 #prediction worker to predict targets and calculate Fisher's test in parallel
 def doTargetPrediction(pickled_model_name):
-	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	mod = pickled_model_name.split(sep)[-1].split('.')[0]
 	clf = open_Model(mod)
 	probs1 = clf.predict_proba(querymatrix1)[:,1]
 	preds1 = sum(probs1 > threshold)
