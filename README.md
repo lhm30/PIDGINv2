@@ -124,13 +124,13 @@ INSTRUCTIONS
     Example of how to run the code:
 	
     ```
-    python predict_enriched_two_libraries.py filename_1.csv filename_2.csv 10 0.9 "Homo sapiens (Human)"
+    python predict_enriched_two_libraries.py filename_1.csv filename_2.csv 10 0.9 0.3 "Homo sapiens (Human)"
     ```
     
     The output is a ranked list of targets that are more statistically associated with the input compounds. A low Prediction Ratio, Odd's Ratio and p-value metric indicates a higher enrichment for a target/pathway/disease when compared to the inactive compound set.
     
     
-8. ```predict_fingerprints.py filename_1.csv N_cores threshold DisGeNET_threshold organism```
+8. ```predict_target_fingerprints.py filename_1.csv N_cores threshold DisGeNET_threshold organism```
     This script calculates target, pathway and disease hits per compound and represents them in a matrix. The DisGeNET threshold and organism are optional. Organism must be as specified in the classes_in_model.txt and enclosed by quotes ("")
     
     Example of how to run the code:
