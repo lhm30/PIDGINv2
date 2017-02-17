@@ -97,14 +97,14 @@ INSTRUCTIONS
 
     bg_predictions.txt contains rows of target models with corresponding columns for the number of background compounds from PubChem at a given TPR threshold (to 2DP).
     
-    DisGeNET_diseases.txt contains disease data used to annotate target predictions. DisGeNET gene-disease score takes into account the number and type of sources (level of curation, organisms), and the number of publications supporting the association. The score ranges from 0 to 1 to give confidence for annotations. A DisGeNET_threshold can be supplied at runtime when annotating predictions with diseases (0.5 threshold applied by default). More info on the score here: http://disgenet.org/web/DisGeNET/menu/dbinfo#score 
+    DisGeNET_diseases.txt contains disease data used to annotate target predictions. DisGeNET gene-disease score takes into account the number and type of sources (level of curation, organisms), and the number of publications supporting the association. The score ranges from 0 to 1 to give confidence for annotations. A DisGeNET_threshold can be supplied at runtime when annotating predictions with diseases (0.06 threshold applied by default, which includes associations from curated sources/animal models supporting them or reported in 20-200 papers). More info on the score here: http://disgenet.org/web/DisGeNET/menu/dbinfo#score 
 
-	Organism must be as specified in the classes_in_model.txt and enclosed by quotes ("")
+	If using "Organism" it must be as specified in the classes_in_model.txt and enclosed by quotes ("")
 
     Example of how to run the code:
 
     ```
-    python predict_enriched.py input.csv 4 0.5 0.25 "Homo sapiens (Human)"
+    python predict_enriched.py input.csv 4 0.5 0.06 "Homo sapiens (Human)"
     ```
     
     The output is a ranked list of targets that are more statistically associated with the input compounds. A low Prediction Ratio, Odd's Ratio and p-value metric indicates a higher enrichment for a target/pathway/disease when compared to the background rate
@@ -130,7 +130,7 @@ INSTRUCTIONS
     The output is a ranked list of targets that are more statistically associated with the input compounds. A low Prediction Ratio, Odd's Ratio and p-value metric indicates a higher enrichment for a target/pathway/disease when compared to the inactive compound set.
     
     
-8. ```predict_target_fingerprints.py filename_1.csv N_cores threshold DisGeNET_threshold organism```
+8. ```predict_per_comp.py filename_1.csv N_cores threshold DisGeNET_threshold organism```
     This script calculates target, pathway and disease hits per compound and represents them in a matrix. The DisGeNET threshold and organism are optional. Organism must be as specified in the classes_in_model.txt and enclosed by quotes ("")
     
     Example of how to run the code:
@@ -140,13 +140,33 @@ INSTRUCTIONS
     ```
     
     
-9. ```predict_enriched_two_libraries_decision_tree.py filename_1.csv N_cores threshold DisGeNET_threshold organism minimum_sample_split minimum_leaf_split max_depth```
+9. ```predict_target_fingerprints.py filename_1.csv N_cores organism```
+    This script calculates target probabilities per compound in a transposed (columns are targets), simplified a matrix. These can be used as a fingerprint/descriptor for biological space. Organism filter is optional. If filtering predictions by organism, this must be as specified in the classes_in_model.txt and enclosed by quotes ("")
+    
+    Example of how to run the code:
+	
+    ```
+    python predict_target_fingerprints.py input.csv 30 0.5 0.3 "Homo sapiens (Human)"
+    ```
+    
+    
+10. ```predict_enriched_two_libraries_decision_tree.py filename_1.csv filename_2.csv N_cores threshold DisGeNET_threshold organism minimum_sample_split minimum_leaf_split max_depth```
     This script calculates target, pathway and disease hits enrichment and visualises the target predictions in a decision tree (jpg file). The DisGeNET threshold and organism are optional. As always, organism must be enclosed by quotes ("")
     
     Example of how to run the code:
 	
     ```
-    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 "Homo sapiens (Human) 10 10 8"
+    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 "Homo sapiens (Human) 2 2 5"
+    ```
+    
+   
+11. ```predict_enriched_decision_tree.py filename_1.csv N_cores threshold DisGeNET_threshold organism minimum_sample_split minimum_leaf_split max_depth no_kmeans_clusters```
+    This script calculates target, pathway and disease hits enrichment and visualises the target predictions in a decision tree (jpg file). This code uses kmeans clustering to cluster predictions within the input dataset, as a method to split input data into hypothetical modes-of-action. The number of clusters is therefore subjective and unsupervised. The DisGeNET threshold and organism are optional. As always, organism must be enclosed by quotes ("")
+    
+    Example of how to run the code:
+	
+    ```
+    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 "Homo sapiens (Human) 2 2 5 5"
     ```
 
 ==========================================================================================
