@@ -104,17 +104,12 @@ def open_Model(mod):
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
 	return clf
-	
-#unzip a pkl model
-def open_Model(mod):
-	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
-		with zfile.open(mod + '.pkl', 'r') as fid:
-			clf = cPickle.load(fid)
-	return clf
 
 #prediction worker	
 def doTargetPrediction(pickled_model_name):
-	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	mod = pickled_model_name.split(sep)[-1].split('.')[0]
 	clf = open_Model(mod)
 	probs = clf.predict_proba(querymatrix)[:,1]
 	preds = map(int,probs > threshold)
@@ -127,7 +122,7 @@ def performTargetPrediction(models):
 	total_pw = set()
 	total_disease = set()
 	prediction_results = dict()
-	pool = Pool(processes=N_cores)  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,threshold,))  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
@@ -143,67 +138,75 @@ def performTargetPrediction(models):
 	pool.join()
 	prediction_matrix = np.array([j for i,j in sorted(prediction_results.items())]).transpose()
 	return prediction_results, prediction_matrix, sorted(list(total_pw)), sorted(list(total_disease))
+	
+#initializer for the pool
+def initPool(querymatrix_, threshold_):
+	global querymatrix, threshold
+	querymatrix = querymatrix_
+	threshold = threshold_
 
 #main
-input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
-introMessage()
-print ' Using ' + str(N_cores) + ' Cores'
-try:
-	threshold = float(sys.argv[3])
-except ValueError:
-	print 'ERROR: Enter a valid float (2DP) for threshold'
-	quit()
-try:
-	dgn_threshold = float(sys.argv[4])
-except IndexError:
-	dgn_threshold = 0
-try:
-	desired_organism = sys.argv[5]
-except IndexError:
-	desired_organism = None
+if __name__ == '__main__':
+	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
+	introMessage()
+	print ' Using ' + str(N_cores) + ' Cores'
+	try:
+		threshold = float(sys.argv[3])
+	except ValueError:
+		print 'ERROR: Enter a valid float (2DP) for threshold'
+		quit()
+	try:
+		dgn_threshold = float(sys.argv[4])
+	except IndexError:
+		dgn_threshold = 0
+	try:
+		desired_organism = sys.argv[5]
+	except IndexError:
+		desired_organism = None
+	model_info = getUniprotInfo()
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	if desired_organism is not None:
+		if os.name == 'nt': sep = '\\'
+		else: sep = '/'
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
+	disease_links, disease_score = getDisgenetInfo()
+	pathway_links, pathway_info = getPathwayInfo()
+	print ' Total Number of Classes : ' + str(len(models))
+	print ' Using TPR threshold of : ' + str(threshold)
+	print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
+	if desired_organism is not None:
+		print ' Predicting for organism : ' + desired_organism
+		out_file = open(input_name + '_out_percomp_target_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+		out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+		out_file3 = open(input_name + '_out_percomp_disease_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt', 'w')
+	else:
+		out_file = open(input_name + '_out_percomp_target_' + str(threshold) + '.txt', 'w')
+		out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '.txt', 'w')
+		out_file3 = open(input_name + '_out_percomp_disease_' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
 
-model_info = getUniprotInfo()
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
-if desired_organism is not None:
-	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]][4] == desired_organism]
-disease_links, disease_score = getDisgenetInfo()
-pathway_links, pathway_info = getPathwayInfo()
-print ' Total Number of Classes : ' + str(len(models))
-print ' Using TPR threshold of : ' + str(threshold)
-print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
-if desired_organism is not None:
-	print ' Predicting for organism : ' + desired_organism
-	out_file = open(input_name + '_out_percomp_target_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
-	out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
-	out_file3 = open(input_name + '_out_percomp_disease_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt', 'w')
-else:
-	out_file = open(input_name + '_out_percomp_target_' + str(threshold) + '.txt', 'w')
-	out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '.txt', 'w')
-	out_file3 = open(input_name + '_out_percomp_disease_' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
-
-#perform target predictions and tp fingerprints to file 
-querymatrix,smiles = importQuery(input_name)
-print ' Total Number of Query Molecules : ' + str(len(querymatrix))
-prediction_results,prediction_matrix,sorted_pws,sorted_diseases = performTargetPrediction(models)
-sorted_targets = sorted(prediction_results.keys())
-out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted(prediction_results.keys())])) + '\n')
-out_file.write('-\t' + '\t'.join(map(str,[model_info[i][4] for i in sorted(prediction_results.keys())])) + '\n')
-out_file2.write('Compound\t' + '\t'.join(map(str,sorted_pws)) + '\n')
-out_file2.write('Compound\t' + '\t'.join(map(str,[pathway_info[i][0] for i in sorted_pws])) + '\n')
-out_file3.write('Compound\t' + '\t'.join(map(str,sorted_diseases)) + '\n')
-for i, row in enumerate(prediction_matrix):
-	#write target prediction fp
-	out_file.write(smiles[i] + '\t' + '\t'.join(map(str,row)) + '\n')
-	pred_targets = [sorted_targets[i2] for i2, pred in enumerate(row) if pred == 1]
-	#write pathway fp
-	comp_pws = Counter(sum([[pw for pw in pathway_links.get(t,[])] for t in pred_targets],[]))
-	pw_line = [smiles[i]] + [comp_pws.get(pwid,0) for pwid in sorted_pws]
-	out_file2.write('\t'.join(map(str,pw_line)) + '\n')
-	#write disease fp
-	comp_disease = Counter(sum([[dis for dis in disease_links.get(t,[]) if disease_score[(dis,t)] > dgn_threshold] for t in pred_targets],[]))
-	disease_line = [smiles[i]] + [comp_disease.get(dis,0) for dis in sorted_diseases]
-	out_file3.write('\t'.join(map(str,disease_line)) + '\n')
-print '\n Wrote Results'
-out_file.close()
-out_file2.close()
-out_file3.close()
+	#perform target predictions and tp fingerprints to file 
+	querymatrix,smiles = importQuery(input_name)
+	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
+	prediction_results,prediction_matrix,sorted_pws,sorted_diseases = performTargetPrediction(models)
+	sorted_targets = sorted(prediction_results.keys())
+	out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted(prediction_results.keys())])) + '\n')
+	out_file.write('-\t' + '\t'.join(map(str,[model_info[i][4] for i in sorted(prediction_results.keys())])) + '\n')
+	out_file2.write('Compound\t' + '\t'.join(map(str,sorted_pws)) + '\n')
+	out_file2.write('Compound\t' + '\t'.join(map(str,[pathway_info[i][0] for i in sorted_pws])) + '\n')
+	out_file3.write('Compound\t' + '\t'.join(map(str,sorted_diseases)) + '\n')
+	for i, row in enumerate(prediction_matrix):
+		#write target prediction fp
+		out_file.write(smiles[i] + '\t' + '\t'.join(map(str,row)) + '\n')
+		pred_targets = [sorted_targets[i2] for i2, pred in enumerate(row) if pred == 1]
+		#write pathway fp
+		comp_pws = Counter(sum([[pw for pw in pathway_links.get(t,[])] for t in pred_targets],[]))
+		pw_line = [smiles[i]] + [comp_pws.get(pwid,0) for pwid in sorted_pws]
+		out_file2.write('\t'.join(map(str,pw_line)) + '\n')
+		#write disease fp
+		comp_disease = Counter(sum([[dis for dis in disease_links.get(t,[]) if disease_score[(dis,t)] > dgn_threshold] for t in pred_targets],[]))
+		disease_line = [smiles[i]] + [comp_disease.get(dis,0) for dis in sorted_diseases]
+		out_file3.write('\t'.join(map(str,disease_line)) + '\n')
+	print '\n Wrote Results'
+	out_file.close()
+	out_file2.close()
+	out_file3.close()

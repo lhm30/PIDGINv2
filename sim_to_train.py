@@ -68,9 +68,11 @@ def getUniprotInfo():
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
-#prediction worker	
-def doSimSearch(pickled_model_name):
-	mod = pickled_model_name.split('/')[-1].split('.')[0]
+#sim worker	
+def doSimSearch(model_name):
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	mod = model_name.split(sep)[-1].split('.')[0]
 	try:
 		with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/actives/' + mod + '.smi.zip', 'r') as zfile:
 			comps = [i.split('\t') for i in zfile.open(mod + '.smi', 'r').read().splitlines()]
@@ -92,6 +94,7 @@ def doSimSearch(pickled_model_name):
 #prediction runner
 def performSimSearch(models):
 	sims_results = []
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix, comps))  # set up resources
 	pool = Pool(processes=N_cores)  # set up resources
 	jobs = pool.imap_unordered(doSimSearch, models)
 	out_file2.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t' + '\t'.join(map(str,smiles)) + '\n')
@@ -109,25 +112,32 @@ def performSimSearch(models):
 	pool.join()
 	return sims_results
 
+#initializer for the pool
+def initPool(querymatrix_, comps_):
+	global querymatrix, comps
+	querymatrix = querymatrix_
+	comps = comps_
+
 #main
-input_name = sys.argv[1]
-N_cores = int(sys.argv[2])
-introMessage()
-print ' Calculating Near-Neighbors for ' + input_name
-print ' Using ' + str(N_cores) + ' Cores'
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
-model_info = getUniprotInfo()
-print ' Total Number of Classes : ' + str(len(models))
-output_name = input_name + '_out_similarity_details.txt'
-output_name2 = input_name + '_out_similarity_matrix.txt'
-out_file = open(output_name, 'w')
-out_file2 = open(output_name2, 'w')
-querymatrix,smiles = importQuery(input_name)
-print ' Total Number of Query Molecules : ' + str(len(querymatrix))
-sims_results = performSimSearch(models)
-out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tNear_Neighbor_ChEMBLID\tNear_Neighbor_Smiles\tNear_Neighbor_Bioactive_organism\tNear_Neighbor_conf_score\tNN_activity\tNN_Units\tInput_Compound\tSimilarity\n')
-for row in sorted(sims_results,reverse=True):
-	out_file.write('\t'.join(map(str,model_info[row[1]][:5])) + '\t' + '\t'.join(map(str,row[2:])) + '\t' + str(row[0]) + '\n')
-print '\n Wrote Results to: ' + output_name
-print ' Wrote Results to: ' + output_name2
-out_file.close()
+if __name__ == '__main__':
+	input_name = sys.argv[1]
+	N_cores = int(sys.argv[2])
+	introMessage()
+	print ' Calculating Near-Neighbors for ' + input_name
+	print ' Using ' + str(N_cores) + ' Cores'
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	model_info = getUniprotInfo()
+	print ' Total Number of Classes : ' + str(len(models))
+	output_name = input_name + '_out_similarity_details.txt'
+	output_name2 = input_name + '_out_similarity_matrix.txt'
+	out_file = open(output_name, 'w')
+	out_file2 = open(output_name2, 'w')
+	querymatrix,smiles = importQuery(input_name)
+	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
+	sims_results = performSimSearch(models)
+	out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tNear_Neighbor_ChEMBLID\tNear_Neighbor_Smiles\tNear_Neighbor_Bioactive_organism\tNear_Neighbor_conf_score\tNN_activity\tNN_Units\tInput_Compound\tSimilarity\n')
+	for row in sorted(sims_results,reverse=True):
+		out_file.write('\t'.join(map(str,model_info[row[1]][:5])) + '\t' + '\t'.join(map(str,row[2:])) + '\t' + str(row[0]) + '\n')
+	print '\n Wrote Results to: ' + output_name
+	print ' Wrote Results to: ' + output_name2
+	out_file.close()

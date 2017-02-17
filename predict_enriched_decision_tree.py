@@ -125,7 +125,9 @@ def open_Model(mod):
 
 #prediction worker to predict targets and calculate Fisher's test in parallel
 def doTargetPrediction(pickled_model_name):
-	mod = pickled_model_name.split('/')[-1].split('.')[0]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	mod = pickled_model_name.split(sep)[-1].split('.')[0]
 	clf = open_Model(mod)
 	probs1 = map(int, clf.predict_proba(querymatrix1)[:,1] > threshold)
 	preds1 = sum(probs1)
@@ -141,7 +143,7 @@ def performTargetPrediction(models):
 	prediction_results = []
 	decision_tree_matrix = []
 	decision_tree_node_label = []
-	pool = Pool(processes=N_cores)  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix1,threshold,bg_preds))  # set up resources
 	jobs = pool.imap_unordered(doTargetPrediction, models)
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
@@ -227,82 +229,92 @@ def createTree(matrix,label):
 		graph.write_jpg(output_name_tree)
 	return
 
+#initializer for the pool
+def initPool(querymatrix1_, threshold_, bg_preds_):
+	global querymatrix1, threshold, bg_preds
+	querymatrix1 = querymatrix1_
+	threshold = threshold_
+	bg_preds = bg_preds_
+
 #main
 #set up environment
-input_name1, N_cores  = sys.argv[1], int(sys.argv[2])
-introMessage()
-print ' Using ' + str(N_cores) + ' Cores'
-try:
-	threshold = float(sys.argv[3])
-except ValueError:
-	print 'ERROR: Enter a valid float (2DP) for threshold'
-	quit()
-try:
-	dgn_threshold = float(sys.argv[4])
-except IndexError:
-	dgn_threshold = 0
-model_info = getUniprotInfo()
-min_sampsplit = int(sys.argv[5])
-min_leafsplit = int(sys.argv[6])
-max_d = int(sys.argv[7])
-moa_clusters = int(sys.argv[8])
-try:
-	desired_organism = sys.argv[9]
-except IndexError:
-	desired_organism = None
-models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
-if desired_organism is not None:
-	models = [mod for mod in models if model_info[mod.split('/')[-1].split('.')[0]][4] == desired_organism]
-bg_preds = getBGhits(threshold)
-disease_links, disease_score = getDisgenetInfo()
-pathway_links, pathway_info = getPathwayInfo()
-print ' Total Number of Classes : ' + str(len(models))
-print ' Using TPR threshold of : ' + str(threshold)
-print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
-if desired_organism is not None:
-	print ' Predicting for organism : ' + desired_organism
-	output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '_' + desired_organism[:3] +'.txt'
-	output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '_' + desired_organism[:3] + '.jpg'
-	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt'
-	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
-else:
-	output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '.txt'
-	output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '.jpg'
-	output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
-	output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '.txt'
-print ' Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
-print ' Number of MoA clusters set to : ' + str(moa_clusters)
+if __name__ == '__main__':
+	input_name1, N_cores  = sys.argv[1], int(sys.argv[2])
+	introMessage()
+	print ' Using ' + str(N_cores) + ' Cores'
+	try:
+		threshold = float(sys.argv[3])
+	except ValueError:
+		print 'ERROR: Enter a valid float (2DP) for threshold'
+		quit()
+	try:
+		dgn_threshold = float(sys.argv[4])
+	except IndexError:
+		dgn_threshold = 0
+	min_sampsplit = int(sys.argv[5])
+	min_leafsplit = int(sys.argv[6])
+	max_d = int(sys.argv[7])
+	moa_clusters = int(sys.argv[8])
+	try:
+		desired_organism = sys.argv[9]
+	except IndexError:
+		desired_organism = None
+	model_info = getUniprotInfo()
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	if desired_organism is not None:
+		if os.name == 'nt': sep = '\\'
+		else: sep = '/'
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
+	bg_preds = getBGhits(threshold)
+	disease_links, disease_score = getDisgenetInfo()
+	pathway_links, pathway_info = getPathwayInfo()
+	print ' Total Number of Classes : ' + str(len(models))
+	print ' Using TPR threshold of : ' + str(threshold)
+	print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
+	if desired_organism is not None:
+		print ' Predicting for organism : ' + desired_organism
+		output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '_' + desired_organism[:3] +'.txt'
+		output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '_' + desired_organism[:3] + '.jpg'
+		output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt'
+		output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
+	else:
+		output_name = input_name1 + '_out_enriched_targets_' + str(threshold) + '.txt'
+		output_name_tree = input_name1 + '_MoA_decision_tree_' + str(threshold) + '.jpg'
+		output_name2 = input_name1 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '.txt'
+		output_name3 = input_name1 + '_out_enriched_pathways_' + str(threshold) + '.txt'
+	print ' Using max sample split, max leaves and max depth of : ' + ', '.join(map(str,[min_sampsplit,min_leafsplit,max_d]))
+	print ' Number of MoA clusters set to : ' + str(moa_clusters)
 
-#perform target predictions and write to file
-querymatrix1 = importQuery(input_name1)
-disease_hits, pathway_hits = dict(), dict()
-print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix1))
-prediction_results, decision_tree_matrix, decision_tree_node_label = performTargetPrediction(models)
-out_file = open(output_name, 'w')
-out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
-for row in sorted(prediction_results):
-	out_file.write('\t'.join(map(str,model_info[row[1]])) + '\t' + '\t'.join(map(str, row[2:])) + '\t' + str(row[0]) + '\n')
-print '\n Wrote Results to: ' + output_name
-out_file.close()
+	#perform target predictions and write to file
+	querymatrix1 = importQuery(input_name1)
+	disease_hits, pathway_hits = dict(), dict()
+	print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix1))
+	prediction_results, decision_tree_matrix, decision_tree_node_label = performTargetPrediction(models)
+	out_file = open(output_name, 'w')
+	out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tOdds_Ratio\tFishers_Test_pvalue\tPrediction_Ratio\n')
+	for row in sorted(prediction_results):
+		out_file.write('\t'.join(map(str,model_info[row[1]])) + '\t' + '\t'.join(map(str, row[2:])) + '\t' + str(row[0]) + '\n')
+	print '\n Wrote Results to: ' + output_name
+	out_file.close()
 
-#perform decision tree function and write to file
-createTree(decision_tree_matrix,decision_tree_node_label)
-print 'Wrote Results to: ' + output_name_tree
+	#perform decision tree function and write to file
+	createTree(decision_tree_matrix,decision_tree_node_label)
+	print 'Wrote Results to: ' + output_name_tree
 
-#write disease results to file
-processed_diseases, inp1_total, inp2_total = processHits(disease_hits)
-out_file = open(output_name2, 'w')
-out_file.write('Disease_Name\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
-for disease, ratio in sorted(processed_diseases.items(), key=operator.itemgetter(1)):
-	out_file.write(disease + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
-print '\n Wrote Results to: ' + output_name2
-out_file.close()
+	#write disease results to file
+	processed_diseases, inp1_total, inp2_total = processHits(disease_hits)
+	out_file = open(output_name2, 'w')
+	out_file.write('Disease_Name\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
+	for disease, ratio in sorted(processed_diseases.items(), key=operator.itemgetter(1)):
+		out_file.write(disease + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
+	print '\n Wrote Results to: ' + output_name2
+	out_file.close()
 
-#write pathway results to file
-processed_pathways, inp1_total, inp2_total = processHits(pathway_hits)
-out_file = open(output_name3, 'w')
-out_file.write('Pathway_ID\tPathway_Name\tSource\tClass\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
-for pathway, ratio in sorted(processed_pathways.items(), key=operator.itemgetter(1)):
-	out_file.write(pathway + '\t' + '\t'.join(map(str,pathway_info[pathway])) + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
-print '\n Wrote Results to: ' + output_name3
-out_file.close()
+	#write pathway results to file
+	processed_pathways, inp1_total, inp2_total = processHits(pathway_hits)
+	out_file = open(output_name3, 'w')
+	out_file.write('Pathway_ID\tPathway_Name\tSource\tClass\t'+input_name1+'_Hits\t'+input_name1+'_Precent_Hits\tPubChem_Hits\tPubChem_Precent_Hits\tchi2_test_statistic\tchi2_pvalue\tPrediction_Ratio\n')
+	for pathway, ratio in sorted(processed_pathways.items(), key=operator.itemgetter(1)):
+		out_file.write(pathway + '\t' + '\t'.join(map(str,pathway_info[pathway])) + '\t' + '\t'.join(map(str,ratio[1:])) + '\t' + str(ratio[0]) + '\n')
+	print '\n Wrote Results to: ' + output_name3
+	out_file.close()
