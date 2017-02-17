@@ -150,23 +150,32 @@ INSTRUCTIONS
     ```
     
     
-10. ```predict_enriched_two_libraries_decision_tree.py filename_1.csv filename_2.csv N_cores threshold DisGeNET_threshold organism minimum_sample_split minimum_leaf_split max_depth```
+10. ```predict_enriched_two_libraries_decision_tree.py filename_1.csv filename_2.csv N_cores threshold DisGeNET_threshold minimum_sample_split minimum_leaf_split max_depth organism```
     This script calculates target, pathway and disease hits enrichment and visualises the target predictions in a decision tree (jpg file). The DisGeNET threshold and organism are optional. As always, organism must be enclosed by quotes ("")
     
     Example of how to run the code:
 	
     ```
-    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 "Homo sapiens (Human) 2 2 5"
+    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv nontoxic_background.csv 10 0.5 0.5 2 2 5 "Homo sapiens (Human)"
     ```
     
    
-11. ```predict_enriched_decision_tree.py filename_1.csv N_cores threshold DisGeNET_threshold organism minimum_sample_split minimum_leaf_split max_depth no_kmeans_clusters```
+11. ```predict_enriched_decision_tree.py filename_1.csv N_cores threshold DisGeNET_threshold minimum_sample_split minimum_leaf_split max_depth N_kmeans_clusters organism```
     This script calculates target, pathway and disease hits enrichment and visualises the target predictions in a decision tree (jpg file). This code uses kmeans clustering to cluster predictions within the input dataset, as a method to split input data into hypothetical modes-of-action. The number of clusters is therefore subjective and unsupervised. The DisGeNET threshold and organism are optional. As always, organism must be enclosed by quotes ("")
     
     Example of how to run the code:
 	
     ```
-    python predict_enriched_decision_tree.py cytotox_library.csv 10 0.5 0.5 "Homo sapiens (Human) 2 2 5 5"
+    python predict_enriched_decision_tree.py cytotox_library.csv 10 0.5 0.5 2 2 5 5 "Homo sapiens (Human)"
     ```
+    
+12. ```sim_to_train.py filename.csv N_cores```
+    This script conducts Tanimoto coefficient (Tc) similarity analysis for input compounds in filename.csv and the training data in PIDGIN. This can be used to support prediction interpretation to indicate which compounds are driving predictions. Two files are produced; The first is a matrix similar to the predict_raw script above, which has a similarity matrix of compounds vs. target instead of the raw predictions. The second is a detailed breakdown of the nearest neighbour compounds in the training set (i.e. their affinity, confidence and which organism this is extracted from - since ortholog bioactivity data is also used).    
+    Example of how to run the code:
+	
+    ```
+    python sim_to_train.py cytotox_library.csv 10
+    ```
+
 
 ==========================================================================================

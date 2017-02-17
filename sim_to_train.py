@@ -94,8 +94,7 @@ def doSimSearch(model_name):
 #prediction runner
 def performSimSearch(models):
 	sims_results = []
-	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix, comps))  # set up resources
-	pool = Pool(processes=N_cores)  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,))  # set up resources
 	jobs = pool.imap_unordered(doSimSearch, models)
 	out_file2.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t' + '\t'.join(map(str,smiles)) + '\n')
 	for i, result in enumerate(jobs):
@@ -113,10 +112,9 @@ def performSimSearch(models):
 	return sims_results
 
 #initializer for the pool
-def initPool(querymatrix_, comps_):
-	global querymatrix, comps
+def initPool(querymatrix_):
+	global querymatrix
 	querymatrix = querymatrix_
-	comps = comps_
 
 #main
 if __name__ == '__main__':
