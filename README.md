@@ -166,7 +166,7 @@ INSTRUCTIONS
     Example of how to run the code:
 	
     ```
-    python predict_enriched_two_libraries_decision_tree.py cytotox_library.csv 10 0.5 0.5 "Homo sapiens (Human) 2 2 5 5"
+    python predict_enriched_decision_tree.py cytotox_library.csv 10 0.5 0.5 "Homo sapiens (Human) 2 2 5 5"
     ```
 
 ==========================================================================================
