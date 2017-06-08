@@ -72,7 +72,7 @@ def getUniprotInfo():
 	
 #unzip a pkl model
 def open_Model(mod):
-	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
 	return clf
@@ -85,6 +85,7 @@ def doTargetPrediction(pickled_model_name):
 	clf = open_Model(mod)
 	probs = clf.predict_proba(querymatrix)[:,1]
 	probs = probs.round(2)
+	if threshold is not None: probs = np.array(probs >threshold,dtype=int)
 	return mod,probs
 
 #prediction runner
@@ -110,31 +111,37 @@ def initPool(querymatrix_):
 #main
 if __name__ == '__main__':
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
+	try:
+		threshold = float(sys.argv[3])
+	except KeyError:
+		if sys.argv[3] == 'None': threshold = 'None'
+		else: print 'Enter valid threshold or "None"'
 	introMessage()
 	print ' Using ' + str(N_cores) + ' Cores'
 	try:
-		desired_organism = sys.argv[3]
+		desired_organism = sys.argv[4]
 	except IndexError:
 		desired_organism = None
 
 	model_info = getUniprotInfo()
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 	if desired_organism is not None:
 		if os.name == 'nt': sep = '\\'
 		else: sep = '/'
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 	print ' Total Number of Classes : ' + str(len(models))
 	if desired_organism is not None:
 		print ' Predicting for organism : ' + desired_organism
-		out_name = input_name + '_out_target_fingerprints_' + desired_organism[:3] + '.txt'
+		out_name = input_name + '_out_target_fingerprints_' + desired_organism[:3] + '_' + str(threshold) + '.txt'
 		out_file = open(out_name, 'w')
 	else:
-		out_name = input_name + '_out_target_fingerprints_' + '.txt'
+		out_name = input_name + '_out_target_fingerprints_' + str(threshold) + '.txt'
 		out_file = open(out_name, 'w')
 
 	#perform target predictions and tp fingerprints to file 
 	querymatrix,smiles = importQuery(input_name)
 	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
+	print ' Using threshold : ' + str(threshold)
 	sorted_targets,prediction_matrix = performTargetPrediction(models)
 	out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted_targets])) + '\n')
 	for i, row in enumerate(prediction_matrix):
