@@ -110,7 +110,7 @@ INSTRUCTIONS
     The output is a ranked list of targets that are more statistically associated with the input compounds. A low Prediction Ratio, Odd's Ratio and p-value metric indicates a higher enrichment for a target/pathway/disease when compared to the background rate
     
     
-7. ```predict_enriched_two_libraries.py input_active_library.csv input_inactive_library.csv threshold organism```
+7. ```predict_enriched_two_libraries.py input_active_library.csv input_inactive_library.csv tpr_threshold DisGeNET_threshold organism```
     This script calculates enriched targets, NCBI BioSystems pathways and DisGeNET for two compound libraries (e.g could be phenotypically active compounds and to phenotypically inactive compounds).
 
     The protocol corrects for promiscuous models / biases in training data and to which targets are statistically associated with compounds in input_active_library.csv.
