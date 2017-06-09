@@ -66,7 +66,7 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 	
@@ -124,10 +124,10 @@ if __name__ == '__main__':
 		desired_organism = None
 
 	model_info = getUniprotInfo()
-	if desired_organism is not None:
-		if os.name == 'nt': sep = '\\'
-		else: sep = '/'
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
+	if desired_organism is not None:
 		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 	print ' Total Number of Classes : ' + str(len(models))
 	if desired_organism is not None:

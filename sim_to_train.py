@@ -64,17 +64,15 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
 #sim worker	
 def doSimSearch(model_name):
-	if os.name == 'nt': sep = '\\'
-	else: sep = '/'
 	mod = model_name.split(sep)[-1].split('.')[0]
 	try:
-		with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/actives/' + mod + '.smi.zip', 'r') as zfile:
+		with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'actives' + sep + mod + '.smi.zip', 'r') as zfile:
 			comps = [i.split('\t') for i in zfile.open(mod + '.smi', 'r').read().splitlines()]
 	except IOError: return
 	comps2 = []
@@ -123,7 +121,9 @@ if __name__ == '__main__':
 	introMessage()
 	print ' Calculating Near-Neighbors for ' + input_name
 	print ' Using ' + str(N_cores) + ' Cores'
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	model_info = getUniprotInfo()
 	print ' Total Number of Classes : ' + str(len(models))
 	output_name = input_name + '_out_similarity_details.txt'

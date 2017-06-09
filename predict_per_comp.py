@@ -66,7 +66,7 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
@@ -74,7 +74,7 @@ def getUniprotInfo():
 def getDisgenetInfo():
 	return_dict1 = dict()
 	return_dict2 = dict()
-	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/DisGeNET_diseases.txt').read().splitlines()]
+	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'DisGeNET_diseases.txt').read().splitlines()]
 	for l in disease_file:
 		try:
 			return_dict1[l[0]].append(l[1])
@@ -89,7 +89,7 @@ def getDisgenetInfo():
 def getPathwayInfo():
 	return_dict1 = dict()
 	return_dict2 = dict()
-	pathway_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/biosystems.txt').read().splitlines()]
+	pathway_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'biosystems.txt').read().splitlines()]
 	for l in pathway_info:
 		try:
 			return_dict1[l[0]].append(l[1])
@@ -100,7 +100,7 @@ def getPathwayInfo():
 
 #unzip a pkl model
 def open_Model(mod):
-	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
 	return clf
@@ -164,7 +164,7 @@ if __name__ == '__main__':
 	except IndexError:
 		desired_organism = None
 	model_info = getUniprotInfo()
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	if desired_organism is not None:
 		if os.name == 'nt': sep = '\\'
 		else: sep = '/'
