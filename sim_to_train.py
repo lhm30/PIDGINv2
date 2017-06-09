@@ -116,13 +116,13 @@ def initPool(querymatrix_):
 
 #main
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name = sys.argv[1]
 	N_cores = int(sys.argv[2])
 	introMessage()
 	print ' Calculating Near-Neighbors for ' + input_name
 	print ' Using ' + str(N_cores) + ' Cores'
-	if os.name == 'nt': sep = '\\'
-	else: sep = '/'
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	model_info = getUniprotInfo()
 	print ' Total Number of Classes : ' + str(len(models))

@@ -108,6 +108,8 @@ def initPool(querymatrix_):
 
 #main
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	multiprocessing.freeze_support()
 	input_name = sys.argv[1]
 	N_cores = int(sys.argv[2])

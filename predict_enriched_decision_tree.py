@@ -237,6 +237,8 @@ def initPool(querymatrix1_, threshold_, bg_preds_):
 #main
 #set up environment
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name1, N_cores  = sys.argv[1], int(sys.argv[2])
 	introMessage()
 	print ' Using ' + str(N_cores) + ' Cores'
@@ -258,8 +260,6 @@ if __name__ == '__main__':
 	except IndexError:
 		desired_organism = None
 	model_info = getUniprotInfo()
-	if os.name == 'nt': sep = '\\'
-	else: sep = '/'
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	if desired_organism is not None:
 		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]

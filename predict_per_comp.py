@@ -147,6 +147,8 @@ def initPool(querymatrix_, threshold_):
 
 #main
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
 	introMessage()
 	print ' Using ' + str(N_cores) + ' Cores'
@@ -166,8 +168,6 @@ if __name__ == '__main__':
 	model_info = getUniprotInfo()
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	if desired_organism is not None:
-		if os.name == 'nt': sep = '\\'
-		else: sep = '/'
 		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 	disease_links, disease_score = getDisgenetInfo()
 	pathway_links, pathway_info = getPathwayInfo()
