@@ -1,3 +1,5 @@
 .vscode
 *.pkl.zip
 *_out_*
+
+*.smi
