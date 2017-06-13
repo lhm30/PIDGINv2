@@ -66,12 +66,16 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 	
 #unzip a pkl model
 def open_Model(mod):
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
@@ -110,6 +114,8 @@ def initPool(querymatrix_):
 
 #main
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
 	try:
 		threshold = float(sys.argv[3])
@@ -122,22 +128,17 @@ if __name__ == '__main__':
 		desired_organism = sys.argv[4]
 	except IndexError:
 		desired_organism = None
-
 	model_info = getUniprotInfo()
-	if desired_organism is not None:
-		if os.name == 'nt': sep = '\\'
-		else: sep = '/'
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
-		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
-	print ' Total Number of Classes : ' + str(len(models))
 	if desired_organism is not None:
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 		print ' Predicting for organism : ' + desired_organism
 		out_name = input_name + '_out_target_fingerprints_' + desired_organism[:3] + '_' + str(threshold) + '.txt'
 		out_file = open(out_name, 'w')
 	else:
 		out_name = input_name + '_out_target_fingerprints_' + str(threshold) + '.txt'
 		out_file = open(out_name, 'w')
-
+	print ' Total Number of Classes : ' + str(len(models))
 	#perform target predictions and tp fingerprints to file 
 	querymatrix,smiles = importQuery(input_name)
 	print ' Total Number of Query Molecules : ' + str(len(querymatrix))

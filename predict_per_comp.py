@@ -66,15 +66,19 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
 #get info for diseases
 def getDisgenetInfo():
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	return_dict1 = dict()
 	return_dict2 = dict()
-	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/DisGeNET_diseases.txt').read().splitlines()]
+	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'DisGeNET_diseases.txt').read().splitlines()]
 	for l in disease_file:
 		try:
 			return_dict1[l[0]].append(l[1])
@@ -87,9 +91,11 @@ def getDisgenetInfo():
 
 #get info for biosystems pathways
 def getPathwayInfo():
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	return_dict1 = dict()
 	return_dict2 = dict()
-	pathway_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/biosystems.txt').read().splitlines()]
+	pathway_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'biosystems.txt').read().splitlines()]
 	for l in pathway_info:
 		try:
 			return_dict1[l[0]].append(l[1])
@@ -100,7 +106,9 @@ def getPathwayInfo():
 
 #unzip a pkl model
 def open_Model(mod):
-	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
 	return clf
@@ -147,6 +155,8 @@ def initPool(querymatrix_, threshold_):
 
 #main
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
 	introMessage()
 	print ' Using ' + str(N_cores) + ' Cores'
@@ -164,17 +174,11 @@ if __name__ == '__main__':
 	except IndexError:
 		desired_organism = None
 	model_info = getUniprotInfo()
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
-	if desired_organism is not None:
-		if os.name == 'nt': sep = '\\'
-		else: sep = '/'
-		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	disease_links, disease_score = getDisgenetInfo()
 	pathway_links, pathway_info = getPathwayInfo()
-	print ' Total Number of Classes : ' + str(len(models))
-	print ' Using TPR threshold of : ' + str(threshold)
-	print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
 	if desired_organism is not None:
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 		print ' Predicting for organism : ' + desired_organism
 		out_file = open(input_name + '_out_percomp_target_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
 		out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '_' + desired_organism[:3] + '.txt', 'w')
@@ -186,6 +190,9 @@ if __name__ == '__main__':
 
 	#perform target predictions and tp fingerprints to file 
 	querymatrix,smiles = importQuery(input_name)
+	print ' Total Number of Classes : ' + str(len(models))
+	print ' Using TPR threshold of : ' + str(threshold)
+	print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
 	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 	prediction_results,prediction_matrix,sorted_pws,sorted_diseases = performTargetPrediction(models)
 	sorted_targets = sorted(prediction_results.keys())

@@ -63,15 +63,19 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:8] for l in model_info}
 	return return_dict
 
 #get info for diseases
 def getDisgenetInfo():
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	return_dict1 = dict()
 	return_dict2 = dict()
-	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/DisGeNET_diseases.txt').read().splitlines()]
+	disease_file = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'DisGeNET_diseases.txt').read().splitlines()]
 	for l in disease_file:
 		try:
 			return_dict1[l[0]].append(l[1])
@@ -84,9 +88,11 @@ def getDisgenetInfo():
 	
 #get info for biosystems pathways
 def getPathwayInfo():
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	return_dict1 = dict()
 	return_dict2 = dict()
-	pathway_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/biosystems.txt').read().splitlines()]
+	pathway_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'biosystems.txt').read().splitlines()]
 	for l in pathway_info:
 		try:
 			return_dict1[l[0]].append(l[1])
@@ -106,7 +112,9 @@ def calcPredictionRatio(preds1,preds2):
 
 #unzip a pkl model
 def open_Model(mod):
-	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
 	return clf
@@ -198,6 +206,8 @@ def initPool(querymatrix1_, querymatrix2_, threshold_):
 #main
 #set up environment
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name1, input_name2, N_cores  = sys.argv[1], sys.argv[2], int(sys.argv[3])
 	introMessage()
 	print ' Using ' + str(N_cores) + ' Cores'
@@ -215,17 +225,11 @@ if __name__ == '__main__':
 	except IndexError:
 		desired_organism = None
 	model_info = getUniprotInfo()
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
-	if desired_organism is not None:
-		if os.name == 'nt': sep = '\\'
-		else: sep = '/'
-		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	disease_links, disease_score = getDisgenetInfo()
 	pathway_links, pathway_info = getPathwayInfo()
-	print ' Total Number of Classes : ' + str(len(models))
-	print ' Using TPR threshold of : ' + str(threshold)
-	print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
 	if desired_organism is not None:
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 		print ' Predicting for organism : ' + desired_organism
 		output_name = input_name1 + '_vs_' + input_name2 + '_out_enriched_targets_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
 		output_name2 = input_name1 + '_vs_' + input_name2 + '_out_enriched_diseases_' + str(threshold) + '_' + str(dgn_threshold) + '_' + desired_organism[:3] + '.txt'
@@ -239,6 +243,9 @@ if __name__ == '__main__':
 	querymatrix1 = importQuery(input_name1)
 	querymatrix2 = importQuery(input_name2)
 	disease_hits, pathway_hits = dict(), dict()
+	print ' Total Number of Classes : ' + str(len(models))
+	print ' Using TPR threshold of : ' + str(threshold)
+	print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
 	print ' Total Number of Molecules in ' +input_name1+ ' : ' + str(len(querymatrix1))
 	print ' Total Number of Molecules in ' +input_name2+ ' : ' + str(len(querymatrix2))
 	prediction_results = performTargetPrediction(models)

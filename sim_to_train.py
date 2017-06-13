@@ -64,7 +64,9 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
@@ -74,7 +76,7 @@ def doSimSearch(model_name):
 	else: sep = '/'
 	mod = model_name.split(sep)[-1].split('.')[0]
 	try:
-		with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/actives/' + mod + '.smi.zip', 'r') as zfile:
+		with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'actives' + sep + mod + '.smi.zip', 'r') as zfile:
 			comps = [i.split('\t') for i in zfile.open(mod + '.smi', 'r').read().splitlines()]
 	except IOError: return
 	comps2 = []
@@ -118,12 +120,14 @@ def initPool(querymatrix_):
 
 #main
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name = sys.argv[1]
 	N_cores = int(sys.argv[2])
 	introMessage()
 	print ' Calculating Near-Neighbors for ' + input_name
 	print ' Using ' + str(N_cores) + ' Cores'
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	model_info = getUniprotInfo()
 	print ' Total Number of Classes : ' + str(len(models))
 	output_name = input_name + '_out_similarity_details.txt'

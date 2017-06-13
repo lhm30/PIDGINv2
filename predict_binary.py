@@ -65,13 +65,17 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:8] for l in model_info}
 	return return_dict
 
 #unzip a pkl model
 def open_Model(mod):
-	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
 	return clf
@@ -110,6 +114,8 @@ def initPool(querymatrix_, threshold_):
 
 #main
 if __name__ == '__main__':
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	input_name = sys.argv[1]
 	N_cores = int(sys.argv[2])
 	introMessage()
@@ -120,7 +126,7 @@ if __name__ == '__main__':
 	except ValueError:
 		print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
 		quit()
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	model_info = getUniprotInfo()
 	print ' Total Number of Classes : ' + str(len(models))
 	print ' Using TPR threshold of : ' + str(threshold)
