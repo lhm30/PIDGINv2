@@ -146,7 +146,7 @@ def initPool(querymatrix_, threshold_):
 	threshold = threshold_
 
 #main
-if __name__ == '__main__' or __name__=='__parents_main__':
+if __name__ == '__main__':
 	if os.name == 'nt': sep = '\\'
 	else: sep = '/'
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
