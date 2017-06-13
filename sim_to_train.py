@@ -96,7 +96,7 @@ def doSimSearch(model_name):
 #prediction runner
 def performSimSearch(models):
 	sims_results = []
-	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,))  # set up resources
+	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,smiles))  # set up resources
 	jobs = pool.imap_unordered(doSimSearch, models)
 	out_file2.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t' + '\t'.join(map(str,smiles)) + '\n')
 	for i, result in enumerate(jobs):
@@ -114,9 +114,10 @@ def performSimSearch(models):
 	return sims_results
 
 #initializer for the pool
-def initPool(querymatrix_):
-	global querymatrix
+def initPool(querymatrix_,smiles_):
+	global querymatrix, smiles
 	querymatrix = querymatrix_
+	smiles = smiles_
 
 #main
 if __name__ == '__main__':
@@ -124,11 +125,24 @@ if __name__ == '__main__':
 	else: sep = '/'
 	input_name = sys.argv[1]
 	N_cores = int(sys.argv[2])
+	try:
+		desired_organism = sys.argv[3]
+	except IndexError:
+		desired_organism = None	
 	introMessage()
 	print ' Calculating Near-Neighbors for ' + input_name
 	print ' Using ' + str(N_cores) + ' Cores'
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	model_info = getUniprotInfo()
+
+	if desired_organism is not None:
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
+		output_name = input_name + '_out_similarity_details' + desired_organism[:3] + '.txt'
+		output_name2 = input_name + '_out_similarity_matrix' + desired_organism[:3] + '.txt'
+		print ' Predicting for organism : ' + desired_organism
+	else:
+		output_name = input_name + '_out_similarity_details.txt'
+		output_name2 = input_name + '_out_similarity_matrix.txt'
 	print ' Total Number of Classes : ' + str(len(models))
 	output_name = input_name + '_out_similarity_details.txt'
 	output_name2 = input_name + '_out_similarity_matrix.txt'
