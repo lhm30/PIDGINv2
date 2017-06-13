@@ -65,12 +65,16 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:8] for l in model_info}
 	return return_dict
 
 #unzip a pkl model
 def open_Model(mod):
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
@@ -107,25 +111,24 @@ def initPool(querymatrix_):
 	querymatrix = querymatrix_
 
 #main
-if __name__ == '__main__' or __name__=='__parents_main__':
-	if os.name == 'nt': sep = '\\'
-	else: sep = '/'
-	multiprocessing.freeze_support()
-	input_name = sys.argv[1]
-	N_cores = int(sys.argv[2])
-	introMessage()
-	print ' Predicting Targets for ' + input_name
-	print ' Using ' + str(N_cores) + ' Cores'
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
-	model_info = getUniprotInfo()
-	print ' Total Number of Classes : ' + str(len(models))
-	output_name = input_name + '_out_raw.txt'
-	out_file = open(output_name, 'w')
-	querymatrix,smiles = importQuery(input_name)
-	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
-	prediction_results = performTargetPrediction(models)
-	out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\tChEMBL_First_Published\t' + '\t'.join(map(str,smiles)) + '\n')
-	for row in sorted(prediction_results):
-		out_file.write('\t'.join(map(str,model_info[row[0]])) + '\t' + '\t'.join(map(str,row[1])) + '\n')
-	print '\n Wrote Results to: ' + output_name
-	out_file.close()
+if os.name == 'nt': sep = '\\'
+else: sep = '/'
+multiprocessing.freeze_support()
+input_name = sys.argv[1]
+N_cores = int(sys.argv[2])
+introMessage()
+print ' Predicting Targets for ' + input_name
+print ' Using ' + str(N_cores) + ' Cores'
+models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
+model_info = getUniprotInfo()
+print ' Total Number of Classes : ' + str(len(models))
+output_name = input_name + '_out_raw.txt'
+out_file = open(output_name, 'w')
+querymatrix,smiles = importQuery(input_name)
+print ' Total Number of Query Molecules : ' + str(len(querymatrix))
+prediction_results = performTargetPrediction(models)
+out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\tChEMBL_First_Published\t' + '\t'.join(map(str,smiles)) + '\n')
+for row in sorted(prediction_results):
+	out_file.write('\t'.join(map(str,model_info[row[0]])) + '\t' + '\t'.join(map(str,row[1])) + '\n')
+print '\n Wrote Results to: ' + output_name
+out_file.close()
