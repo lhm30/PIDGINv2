@@ -195,7 +195,7 @@ def initPool(querymatrix1_, querymatrix2_, threshold_):
 
 #main
 #set up environment
-if __name__ == '__main__':
+if __name__ == '__main__' or __name__=='__parents_main__':
 	if os.name == 'nt': sep = '\\'
 	else: sep = '/'
 	input_name1, input_name2, N_cores  = sys.argv[1], sys.argv[2], int(sys.argv[3])
