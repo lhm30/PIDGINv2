@@ -65,19 +65,21 @@ def importQuery(in_file):
 
 #get info for uniprots
 def getUniprotInfo():
-	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
+	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + '/classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:8] for l in model_info}
 	return return_dict
 
 #unzip a pkl model
 def open_Model(mod):
-	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + mod + '.pkl.zip', 'r') as zfile:
+	with zipfile.ZipFile(os.path.dirname(os.path.abspath(__file__)) + '/models/' + mod + '.pkl.zip', 'r') as zfile:
 		with zfile.open(mod + '.pkl', 'r') as fid:
 			clf = cPickle.load(fid)
 	return clf
 
 #prediction worker	
 def doTargetPrediction(pickled_model_name):
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	mod = pickled_model_name.split(sep)[-1].split('.')[0]
 	clf = open_Model(mod)
 	probs = clf.predict_proba(querymatrix)[:,1]
@@ -118,9 +120,7 @@ if __name__ == '__main__':
 	except ValueError:
 		print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
 		quit()
-	if os.name == 'nt': sep = '\\'
-	else: sep = '/'
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/models/*.zip')]
 	model_info = getUniprotInfo()
 	print ' Total Number of Classes : ' + str(len(models))
 	print ' Using TPR threshold of : ' + str(threshold)
