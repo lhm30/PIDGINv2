@@ -110,8 +110,6 @@ def initPool(querymatrix_):
 
 #main
 if __name__ == '__main__':
-	if os.name == 'nt': sep = '\\'
-	else: sep = '/'
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
 	try:
 		threshold = float(sys.argv[3])
@@ -124,7 +122,10 @@ if __name__ == '__main__':
 		desired_organism = sys.argv[4]
 	except IndexError:
 		desired_organism = None
+
 	model_info = getUniprotInfo()
+	if os.name == 'nt': sep = '\\'
+	else: sep = '/'
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	if desired_organism is not None:
 		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
@@ -136,6 +137,7 @@ if __name__ == '__main__':
 	else:
 		out_name = input_name + '_out_target_fingerprints_' + str(threshold) + '.txt'
 		out_file = open(out_name, 'w')
+
 	#perform target predictions and tp fingerprints to file 
 	querymatrix,smiles = importQuery(input_name)
 	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
