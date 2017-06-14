@@ -20,6 +20,9 @@ from multiprocessing import Pool
 import multiprocessing
 import operator
 multiprocessing.freeze_support()
+from rdkit import RDLogger
+from rdkit import rdBase
+rdBase.DisableLog('rdApp.error')
 
 def introMessage():
 	print '=============================================================================================='
