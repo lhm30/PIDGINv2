@@ -136,7 +136,7 @@ INSTRUCTIONS
     Example of how to run the code:
 	
     ```
-    python predict_fingerprints.py input.csv 30 0.5 0.3 "Homo sapiens (Human)"
+    python predict_per_comp.py input.csv 30 0.5 0.3 "Homo sapiens (Human)"
     ```
     
     
