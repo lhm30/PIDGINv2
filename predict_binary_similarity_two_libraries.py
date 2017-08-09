@@ -131,7 +131,7 @@ if __name__ == '__main__':
 	model_info = getUniprotInfo()
 	print ' Total Number of Classes : ' + str(len(models))
 	print ' Using TPR threshold of : ' + str(threshold)
-	output_name = input_name + '_out_binary_' + str(threshold) + '.txt'
+	output_name = input_name + '_' + input_name2 + '_out_binary_sim_' + str(threshold) + '.txt'
 	out_file = open(output_name, 'w')
 	querymatrix,smiles = importQuery(input_name)
 	querymatrix2,smiles2 = importQuery(input_name2)
@@ -141,14 +141,14 @@ if __name__ == '__main__':
 	prediction_results2 = performTargetPrediction(models)
 	sim_output = []
 	sim_output2 = []
-	for i in len(prediction_results):
-		sim_output.append(rogerstanimoto(prediction_results[:,i],prediction_results2[:,i]))
-		sim_output2.append(jaccard(prediction_results[:,i],prediction_results2[:,i]))
+	for idx in range(prediction_results.shape[1]):
+		sim_output.append(rogerstanimoto(prediction_results[:,idx],prediction_results2[:,idx]))
+		sim_output2.append(jaccard(prediction_results[:,idx],prediction_results2[:,idx]))
 	out_file.write('Compound Pair No.\tSmiles 1\tSmiles 2\tJaccard Sim\n')
 	for idx, comp1 in enumerate(smiles):
 		comp2 = smiles2[idx]
 		s = sim_output[idx]
 		s2 = sim_output[idx]
-		out_file.write('\t'.join(map(str,[idx,comp1,comp2,s,s2])) + '\n')
+		out_file.write('\t'.join(map(str,[idx,comp1,comp2,1-s,1-s2])) + '\n')
 	print '\n Wrote Results to: ' + output_name
 	out_file.close()
