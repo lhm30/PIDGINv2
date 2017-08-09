@@ -123,7 +123,7 @@ if __name__ == '__main__':
 	print ' Predicting Targets for ' + input_name
 	print ' Using ' + str(N_cores) + ' Cores'
 	try:
-		threshold = float(sys.argv[3])
+		threshold = float(sys.argv[4])
 	except ValueError:
 		print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
 		quit()
