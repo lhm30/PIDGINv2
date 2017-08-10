@@ -127,18 +127,27 @@ if __name__ == '__main__':
 	except ValueError:
 		print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
 		quit()
-	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	model_info = getUniprotInfo()
+	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
+	try:
+		desired_organism = sys.argv[5]
+	except IndexError:
+		desired_organism = None	
+	if desired_organism is not None:
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
+		print ' Predicting for organism : ' + desired_organism
+		output_name = input_name + '_' + input_name2 + '_out_binary_sim_' + str(threshold) + '_' + desired_organism[:3] + '.txt'
+	else: 	output_name = input_name + '_' + input_name2 + '_out_binary_sim_' + str(threshold) + '.txt'
 	print ' Total Number of Classes : ' + str(len(models))
 	print ' Using TPR threshold of : ' + str(threshold)
 	output_name = input_name + '_' + input_name2 + '_out_binary_sim_' + str(threshold) + '.txt'
 	out_file = open(output_name, 'w')
 	querymatrix,smiles = importQuery(input_name)
-	querymatrix2,smiles2 = importQuery(input_name2)
-	print ' Total Number of Query Molecules file 1 : ' + str(len(querymatrix))
-	print ' Total Number of Query Molecules file 2 : ' + str(len(querymatrix2))
 	prediction_results = performTargetPrediction(models)
+	print ' Total Number of Query Molecules file 1 : ' + str(len(querymatrix))
+	querymatrix,smiles2 = importQuery(input_name2)
 	prediction_results2 = performTargetPrediction(models)
+	print ' Total Number of Query Molecules file 2 : ' + str(len(querymatrix))
 	sim_output = []
 	sim_output2 = []
 	for idx in range(prediction_results.shape[1]):
@@ -149,6 +158,6 @@ if __name__ == '__main__':
 		comp2 = smiles2[idx]
 		s = sim_output[idx]
 		s2 = sim_output[idx]
-		out_file.write('\t'.join(map(str,[idx,comp1,comp2,1-s,1-s2])) + '\n')
+		out_file.write('\t'.join(map(str,[idx,comp1,comp2,1.0-s,1.0-s2])) + '\n')
 	print '\n Wrote Results to: ' + output_name
 	out_file.close()
