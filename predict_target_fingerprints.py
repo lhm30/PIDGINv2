@@ -120,8 +120,8 @@ if __name__ == '__main__':
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
 	try:
 		threshold = float(sys.argv[3])
-	except KeyError:
-		if sys.argv[3] == 'None': threshold = 'None'
+	except ValueError:
+		if sys.argv[3] == 'None': threshold = None
 		else: print 'Enter valid threshold or "None"'
 	introMessage()
 	print ' Using ' + str(N_cores) + ' Cores'
