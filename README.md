@@ -50,7 +50,7 @@ IMPORTANT
 ==========================================================================================
 
 *	You MUST download the models before running!
-*	The program recognises as input line-separated SMILES in either .csv or .smi format (if the input file contains data additional to the SMILES string, the first entries are interpreted as identifiers – see the [OpenSMILES specification](http://opensmiles.org/opensmiles.html) §4.5)
+*	The program recognises as input line-separated SMILES in either .csv or .smi format (if the input file contains data additional to the SMILES string, the first entries after the SMILES are interpreted as identifiers – see the [OpenSMILES specification](http://opensmiles.org/opensmiles.html) §4.5)
 *	Molecules Should be standardized before running models
 *	ChemAxon Standardizer should be used for structure canonicalization and is free for academic use at (http://www.chemaxon.com)
 *	Protocol used to standardise these molecules is provided: StandMoleProt.xml
