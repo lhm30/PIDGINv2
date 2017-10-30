@@ -30,13 +30,13 @@ def introMessage():
 	print ' Address: Centre For Molecular Informatics, Dept. Chemistry, Lensfield Road, Cambridge CB2 1EW'
 	print '==============================================================================================\n'
 	return
-	
+
 #calculate 2048bit morgan fingerprints, radius 2
 def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
 	fp = AllChem.GetMorganFingerprintAsBitVect(m1,2, nBits=2048)
 	binary = fp.ToBitString()
-	return list(binary) 
+	return list(binary)
 
 #calculate fingerprints for chunked array of smiles
 def arrayFP(inp):
@@ -47,10 +47,13 @@ def arrayFP(inp):
 		except:
 			print 'SMILES Parse Error: ' + i
 	return outfp
-	
+
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
+	#collect IDs, if present
+	if len(query[0].split()) > 1:
+		query = [line.split()[0] for line in query]
 	matrix = np.empty((len(query), 2048), dtype=np.uint8)
 	smiles_per_core = int(math.ceil(len(query) / N_cores)+1)
 	chunked_smiles = [query[x:x+smiles_per_core] for x in xrange(0, len(query), smiles_per_core)]
@@ -87,8 +90,8 @@ def getDisgenetInfo():
 		try:
 			return_dict2[(l[1],l[0])] = float(l[2])
 		except ValueError: pass
-	return return_dict1, return_dict2 
-	
+	return return_dict1, return_dict2
+
 #get info for biosystems pathways
 def getPathwayInfo():
 	if os.name == 'nt': sep = '\\'
@@ -102,14 +105,14 @@ def getPathwayInfo():
 		except KeyError:
 			return_dict1[l[0]] = [l[1]]
 		return_dict2[l[1]] = l[2:]
-	return return_dict1, return_dict2 
+	return return_dict1, return_dict2
 
 #calculate prediction ratio for two sets of predictions
 def calcPredictionRatio(preds1,preds2):
 	preds1_percentage = float(preds1)/float(len(querymatrix1))
 	preds2_percentage = float(preds2)/float(len(querymatrix2))
 	if preds1 == 0 and preds2 == 0: return None
-	if preds1 == 0: return 999.0, round(preds1_percentage,3), round(preds2_percentage,3) 
+	if preds1 == 0: return 999.0, round(preds1_percentage,3), round(preds2_percentage,3)
 	if preds2 == 0: return 0.0, round(preds1_percentage,3), round(preds2_percentage,3)
 	return round(preds2_percentage/preds1_percentage,3), round(preds1_percentage,3), round(preds2_percentage,3)
 
@@ -149,7 +152,7 @@ def performTargetPrediction(models):
 		percent = (float(i)/float(len(models)))*100 + 1
 		sys.stdout.write(' Performing Classification on Query Molecules: %3d%%\r' % percent)
 		sys.stdout.flush()
-		if result is not None: 
+		if result is not None:
 			prediction_results.append(result[:8])
 			updateHits(disease_links,disease_hits,result[1],result[2],result[4])
 			updateHits(pathway_links,pathway_hits,result[1],result[2],result[4])
@@ -159,8 +162,8 @@ def performTargetPrediction(models):
 	pool.join()
 	decision_tree_matrix = np.array(decision_tree_matrix,dtype=np.uint8).transpose()
 	return prediction_results, decision_tree_matrix, decision_tree_node_label
-	
-#update counts for each pathway/disease that is hit by predictions	
+
+#update counts for each pathway/disease that is hit by predictions
 def updateHits(links,hits,uniprot,hit1,hit2):
 	try:
 		for idx in links[uniprot]:
@@ -174,7 +177,7 @@ def updateHits(links,hits,uniprot,hit1,hit2):
 				hits[idx] = np.array([hit1,hit2])
 	except KeyError: return
 	return
-	
+
 #worker for the processHits to calculate the prediction ratio, Chi-square test in parallel
 def doHitProcess(inp):
 	idx, hits, n_f1_hits, n_f2_hits = inp
@@ -205,18 +208,18 @@ def processHits(inp_dict):
 	return out_dict, n_f1_hits, n_f2_hits
 
 #train decision tree on predictions and output graph for pdf
-def createTree(matrix,label):	
+def createTree(matrix,label):
 	vector = [1] * len(querymatrix1) + [0] * len(querymatrix2)
 	ratio = float(len(vector)-sum(vector))/float(sum(vector))
 	sw = np.array([ratio if i == 1 else 1 for i in vector])
 	pc_10 = int(len(querymatrix1)*0.01)
 	clf = tree.DecisionTreeClassifier(min_samples_split=min_sampsplit,min_samples_leaf=min_leafsplit,max_depth=max_d)
 	clf.fit(matrix,vector)
-	dot_data = StringIO()  
-	tree.export_graphviz(clf, out_file=dot_data,  
-							feature_names=label,  
-							class_names=['File2','File1'],  
-							filled=True, rounded=True,  
+	dot_data = StringIO()
+	tree.export_graphviz(clf, out_file=dot_data,
+							feature_names=label,
+							class_names=['File2','File1'],
+							filled=True, rounded=True,
 							special_characters=True,
 							proportion=False,
 							impurity=True)
