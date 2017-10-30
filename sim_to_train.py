@@ -27,7 +27,7 @@ def introMessage():
 	print '==============================================================================================\n'
 	return
 
-	
+
 #calculate 2048bit morgan fingerprints, radius 2
 def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
@@ -49,6 +49,12 @@ def arrayFP(inp):
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
+	#collect IDs, if present
+	if len(query[0].split()) > 1:
+		ids = [line.split()[1] for line in query]
+		query = [line.split()[0] for line in query]
+	else:
+		ids = None
 	smiles_per_core = int(math.ceil(len(query) / N_cores)+1)
 	chunked_smiles = [query[x:x+smiles_per_core] for x in xrange(0, len(query), smiles_per_core)]
 	pool = Pool(processes=N_cores)  # set up resources
@@ -60,7 +66,10 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	return processed_fp, processed_smi
+	#if IDs aren't present, use SMILES as IDs
+	if not ids:
+		ids = processed_smi
+	return processed_fp, processed_smi, ids
 
 #get info for uniprots
 def getUniprotInfo():
@@ -70,7 +79,7 @@ def getUniprotInfo():
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
 
-#sim worker	
+#sim worker
 def doSimSearch(model_name):
 	if os.name == 'nt': sep = '\\'
 	else: sep = '/'
@@ -98,7 +107,7 @@ def performSimSearch(models):
 	sims_results = []
 	pool = Pool(processes=N_cores, initializer=initPool, initargs=(querymatrix,smiles))  # set up resources
 	jobs = pool.imap_unordered(doSimSearch, models)
-	out_file2.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t' + '\t'.join(map(str,smiles)) + '\n')
+	out_file2.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\t' + '\t'.join(map(str,ids)) + '\n')
 	for i, result in enumerate(jobs):
 		percent = (float(i)/float(len(models)))*100 + 1
 		sys.stdout.write(' Calculating Sims for Query Molecules: %3d%%\r' % percent)
@@ -128,7 +137,7 @@ if __name__ == '__main__':
 	try:
 		desired_organism = sys.argv[3]
 	except IndexError:
-		desired_organism = None	
+		desired_organism = None
 	introMessage()
 	print ' Calculating Near-Neighbors for ' + input_name
 	print ' Using ' + str(N_cores) + ' Cores'
@@ -148,7 +157,7 @@ if __name__ == '__main__':
 	output_name2 = input_name + '_out_similarity_matrix.txt'
 	out_file = open(output_name, 'w')
 	out_file2 = open(output_name2, 'w')
-	querymatrix,smiles = importQuery(input_name)
+	querymatrix,smiles,ids = importQuery(input_name)
 	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 	sims_results = performSimSearch(models)
 	out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tNear_Neighbor_ChEMBLID\tNear_Neighbor_Smiles\tNear_Neighbor_Bioactive_organism\tNear_Neighbor_conf_score\tNN_activity\tNN_Units\tInput_Compound\tSimilarity\n')

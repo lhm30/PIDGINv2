@@ -27,13 +27,13 @@ def introMessage():
 	print '==============================================================================================\n'
 	return
 
-	
+
 #calculate 2048bit morgan fingerprints, radius 2
 def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
 	fp = AllChem.GetMorganFingerprintAsBitVect(m1,2, nBits=2048)
 	binary = fp.ToBitString()
-	return list(binary) 
+	return list(binary)
 
 #calculate fingerprints for chunked array of smiles
 def arrayFP(inp):
@@ -50,6 +50,12 @@ def arrayFP(inp):
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
+	#collect IDs, if present
+	if len(query[0].split()) > 1:
+		ids = [line.split()[1] for line in query]
+		query = [line.split()[0] for line in query]
+	else:
+		ids = None
 	matrix = np.empty((len(query), 2048), dtype=np.uint8)
 	smiles_per_core = int(math.ceil(len(query) / N_cores)+1)
 	chunked_smiles = [query[x:x+smiles_per_core] for x in xrange(0, len(query), smiles_per_core)]
@@ -63,7 +69,10 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	return matrix[:current_end], processed_smi
+	#if IDs aren't present, use SMILES as IDs
+	if not ids:
+		ids = processed_smi
+	return matrix[:current_end], processed_smi, ids
 
 #get info for uniprots
 def getUniprotInfo():
@@ -82,7 +91,7 @@ def open_Model(mod):
 			clf = cPickle.load(fid)
 	return clf
 
-#prediction worker	
+#prediction worker
 def doTargetPrediction(pickled_model_name):
 	if os.name == 'nt': sep = '\\'
 	else: sep = '/'
@@ -132,7 +141,7 @@ if __name__ == '__main__':
 	try:
 		desired_organism = sys.argv[5]
 	except IndexError:
-		desired_organism = None	
+		desired_organism = None
 	if desired_organism is not None:
 		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
 		print ' Predicting for organism : ' + desired_organism
@@ -142,10 +151,10 @@ if __name__ == '__main__':
 	print ' Using TPR threshold of : ' + str(threshold)
 	output_name = input_name + '_' + input_name2 + '_out_binary_sim_' + str(threshold) + '.txt'
 	out_file = open(output_name, 'w')
-	querymatrix,smiles = importQuery(input_name)
+	querymatrix,smiles,ids = importQuery(input_name)
 	prediction_results = performTargetPrediction(models)
 	print ' Total Number of Query Molecules file 1 : ' + str(len(querymatrix))
-	querymatrix,smiles2 = importQuery(input_name2)
+	querymatrix,smiles2,ids2 = importQuery(input_name2)
 	prediction_results2 = performTargetPrediction(models)
 	print ' Total Number of Query Molecules file 2 : ' + str(len(querymatrix))
 	sim_output = []
@@ -154,8 +163,8 @@ if __name__ == '__main__':
 		sim_output.append(rogerstanimoto(prediction_results[:,idx],prediction_results2[:,idx]))
 		sim_output2.append(jaccard(prediction_results[:,idx],prediction_results2[:,idx]))
 	out_file.write('Compound Pair No.\tSmiles 1\tSmiles 2\tRogers Tanimoto\tJaccard Sim\n')
-	for idx, comp1 in enumerate(smiles):
-		comp2 = smiles2[idx]
+	for idx, comp1 in enumerate(ids):
+		comp2 = ids2[idx]
 		s = sim_output[idx]
 		s2 = sim_output2[idx]
 		out_file.write('\t'.join(map(str,[idx,comp1,comp2,1.0-s,1.0-s2])) + '\n')
