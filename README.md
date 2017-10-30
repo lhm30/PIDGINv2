@@ -145,7 +145,11 @@ INSTRUCTIONS
 
 
 6. ```predict_target_fingerprints.py filename_1.csv N_cores tpr_threshold organism```
-    This script calculates target probabilities per compound in a transposed (columns are targets), simplified a matrix. These can be used as a fingerprint/descriptor for biological space. Organism filter is optional. If filtering predictions by organism, this must be as specified in the classes_in_model.txt and enclosed by quotes ("")
+    This script calculates target probabilities per compound in a transposed (columns are targets), simplified a matrix. These can be used as a fingerprint/descriptor for biological space.
+
+    tp_threshold may be set to "None" to generate raw descriptors rather than fingerprints.
+
+    Organism filter is optional. If filtering predictions by organism, this must be as specified in the classes_in_model.txt and enclosed by quotes ("")
 
     Example of how to run the code:
 
