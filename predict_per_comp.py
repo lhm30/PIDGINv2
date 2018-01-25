@@ -49,6 +49,12 @@ def arrayFP(inp):
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
+	#collect IDs, if present
+	if len(query[0].split()) > 1:
+		ids = [line.split()[1] for line in query]
+		query = [line.split()[0] for line in query]
+	else:
+		ids = None
 	matrix = np.empty((len(query), 2048), dtype=np.uint8)
 	smiles_per_core = int(math.ceil(len(query) / N_cores)+1)
 	chunked_smiles = [query[x:x+smiles_per_core] for x in xrange(0, len(query), smiles_per_core)]
@@ -62,7 +68,10 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	return matrix[:current_end], processed_smi
+	#if IDs aren't present, use SMILES as IDs
+	if not ids:
+		ids = processed_smi
+	return matrix[:current_end], processed_smi, ids
 
 #get info for uniprots
 def getUniprotInfo():
@@ -188,8 +197,8 @@ if __name__ == '__main__':
 		out_file2 = open(input_name + '_out_percomp_pathway_' + str(threshold) + '.txt', 'w')
 		out_file3 = open(input_name + '_out_percomp_disease_' + str(threshold) + '_' + str(dgn_threshold) + '.txt', 'w')
 
-	#perform target predictions and tp fingerprints to file 
-	querymatrix,smiles = importQuery(input_name)
+	#perform target predictions and tp fingerprints to file
+	querymatrix,smiles,ids = importQuery(input_name)
 	print ' Total Number of Classes : ' + str(len(models))
 	print ' Using TPR threshold of : ' + str(threshold)
 	print ' Using DisGeNET score threshold of : ' + str(dgn_threshold)
@@ -199,19 +208,19 @@ if __name__ == '__main__':
 	out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted(prediction_results.keys())])) + '\n')
 	out_file.write('-\t' + '\t'.join(map(str,[model_info[i][4] for i in sorted(prediction_results.keys())])) + '\n')
 	out_file2.write('Compound\t' + '\t'.join(map(str,sorted_pws)) + '\n')
-	out_file2.write('Compound\t' + '\t'.join(map(str,[pathway_info[i][0] for i in sorted_pws])) + '\n')
+	out_file2.write('-\t' + '\t'.join(map(str,[pathway_info[i][0] for i in sorted_pws])) + '\n')
 	out_file3.write('Compound\t' + '\t'.join(map(str,sorted_diseases)) + '\n')
 	for i, row in enumerate(prediction_matrix):
 		#write target prediction fp
-		out_file.write(smiles[i] + '\t' + '\t'.join(map(str,row)) + '\n')
+		out_file.write(ids[i] + '\t' + '\t'.join(map(str,row)) + '\n')
 		pred_targets = [sorted_targets[i2] for i2, pred in enumerate(row) if pred == 1]
 		#write pathway fp
 		comp_pws = Counter(sum([[pw for pw in pathway_links.get(t,[])] for t in pred_targets],[]))
-		pw_line = [smiles[i]] + [comp_pws.get(pwid,0) for pwid in sorted_pws]
+		pw_line = [ids[i]] + [comp_pws.get(pwid,0) for pwid in sorted_pws]
 		out_file2.write('\t'.join(map(str,pw_line)) + '\n')
 		#write disease fp
 		comp_disease = Counter(sum([[dis for dis in disease_links.get(t,[]) if disease_score[(dis,t)] > dgn_threshold] for t in pred_targets],[]))
-		disease_line = [smiles[i]] + [comp_disease.get(dis,0) for dis in sorted_diseases]
+		disease_line = [ids[i]] + [comp_disease.get(dis,0) for dis in sorted_diseases]
 		out_file3.write('\t'.join(map(str,disease_line)) + '\n')
 	print '\n Wrote Results'
 	out_file.close()

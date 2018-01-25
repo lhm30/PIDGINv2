@@ -32,7 +32,7 @@ def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
 	fp = AllChem.GetMorganFingerprintAsBitVect(m1,2, nBits=2048)
 	binary = fp.ToBitString()
-	return list(binary) 
+	return list(binary)
 
 #calculate fingerprints for chunked array of smiles
 def arrayFP(inp):
@@ -49,6 +49,12 @@ def arrayFP(inp):
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
+	#collect IDs, if present
+	if len(query[0].split()) > 1:
+		ids = [line.split()[1] for line in query]
+		query = [line.split()[0] for line in query]
+	else:
+		ids = None
 	matrix = np.empty((len(query), 2048), dtype=np.uint8)
 	smiles_per_core = int(math.ceil(len(query) / N_cores)+1)
 	chunked_smiles = [query[x:x+smiles_per_core] for x in xrange(0, len(query), smiles_per_core)]
@@ -62,7 +68,10 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	return matrix[:current_end], processed_smi
+	#if IDs aren't present, use SMILES as IDs
+	if not ids:
+		ids = processed_smi
+	return matrix[:current_end], processed_smi, ids
 
 #get info for uniprots
 def getUniprotInfo():
@@ -71,7 +80,7 @@ def getUniprotInfo():
 	model_info = [l.split('\t') for l in open(os.path.dirname(os.path.abspath(__file__)) + sep + 'classes_in_model.txt').read().splitlines()]
 	return_dict = {l[0] : l[0:7] for l in model_info}
 	return return_dict
-	
+
 #unzip a pkl model
 def open_Model(mod):
 	if os.name == 'nt': sep = '\\'
@@ -81,7 +90,7 @@ def open_Model(mod):
 			clf = cPickle.load(fid)
 	return clf
 
-#prediction worker	
+#prediction worker
 def doTargetPrediction(pickled_model_name):
 	if os.name == 'nt': sep = '\\'
 	else: sep = '/'
@@ -120,8 +129,8 @@ if __name__ == '__main__':
 	input_name, N_cores,  = sys.argv[1], int(sys.argv[2])
 	try:
 		threshold = float(sys.argv[3])
-	except KeyError:
-		if sys.argv[3] == 'None': threshold = 'None'
+	except ValueError:
+		if sys.argv[3] == 'None': threshold = None
 		else: print 'Enter valid threshold or "None"'
 	introMessage()
 	print ' Using ' + str(N_cores) + ' Cores'
@@ -140,14 +149,14 @@ if __name__ == '__main__':
 		out_name = input_name + '_out_target_fingerprints_' + str(threshold) + '.txt'
 		out_file = open(out_name, 'w')
 	print ' Total Number of Classes : ' + str(len(models))
-	#perform target predictions and tp fingerprints to file 
-	querymatrix,smiles = importQuery(input_name)
+	#perform target predictions and tp fingerprints to file
+	querymatrix,smiles,ids = importQuery(input_name)
 	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 	print ' Using threshold : ' + str(threshold)
 	sorted_targets,prediction_matrix = performTargetPrediction(models)
 	out_file.write('Compound\t' + '\t'.join(map(str,[i for i in sorted_targets])) + '\n')
 	for i, row in enumerate(prediction_matrix):
 		#write target prediction fp
-		out_file.write(smiles[i] + '\t' + '\t'.join(map(str,row)) + '\n')
+		out_file.write(ids[i] + '\t' + '\t'.join(map(str,row)) + '\n')
 	print '\n Wrote Results to: ' + out_name
 	out_file.close()

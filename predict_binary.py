@@ -48,6 +48,12 @@ def arrayFP(inp):
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
+	#collect IDs, if present
+	if len(query[0].split()) > 1:
+		ids = [line.split()[1] for line in query]
+		query = [line.split()[0] for line in query]
+	else:
+		ids = None
 	matrix = np.empty((len(query), 2048), dtype=np.uint8)
 	smiles_per_core = int(math.ceil(len(query) / N_cores)+1)
 	chunked_smiles = [query[x:x+smiles_per_core] for x in xrange(0, len(query), smiles_per_core)]
@@ -61,7 +67,10 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	return matrix[:current_end], processed_smi
+	#if IDs aren't present, use SMILES as IDs
+	if not ids:
+		ids = processed_smi
+	return matrix[:current_end], processed_smi, ids
 
 #get info for uniprots
 def getUniprotInfo():
@@ -126,16 +135,26 @@ if __name__ == '__main__':
 	except ValueError:
 		print 'ERROR: Enter a valid float (max 2 decimal places) for threshold'
 		quit()
+	try:
+		desired_organism = sys.argv[4]
+	except IndexError:
+		desired_organism = None
 	models = [modelfile for modelfile in glob.glob(os.path.dirname(os.path.abspath(__file__)) + sep + 'models' + sep + '*.zip')]
 	model_info = getUniprotInfo()
+	if desired_organism is not None:
+		models = [mod for mod in models if model_info[mod.split(sep)[-1].split('.')[0]][4] == desired_organism]
+		print ' Predicting for organism : ' + desired_organism
+		output_name = input_name + '_out_binary_' +  str(threshold) + '_' + desired_organism[:3] + '.txt'
+	else:
+		output_name = input_name + '_out_binary_' +  str(threshold) + '.txt'
 	print ' Total Number of Classes : ' + str(len(models))
 	print ' Using TPR threshold of : ' + str(threshold)
-	output_name = input_name + '_out_binary_' + str(threshold) + '.txt'
 	out_file = open(output_name, 'w')
-	querymatrix,smiles = importQuery(input_name)
+	querymatrix,smiles,ids = importQuery(input_name)
 	print ' Total Number of Query Molecules : ' + str(len(querymatrix))
 	prediction_results = performTargetPrediction(models)
-	out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\tChEMBL_First_Published\t' + '\t'.join(map(str,smiles)) + '\n')
+	print str(len(prediction_results))
+	out_file.write('Uniprot\tPref_Name\tGene ID\tTarget_Class\tOrganism\tPDB_ID\tDisGeNET_Diseases_0.06\tChEMBL_First_Published\t' + '\t'.join(map(str,ids)) + '\n')
 	for row in sorted(prediction_results):
 		out_file.write('\t'.join(map(str,model_info[row[0]])) + '\t' + '\t'.join(map(str,row[1])) + '\n')
 	print '\n Wrote Results to: ' + output_name
