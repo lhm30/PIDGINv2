@@ -32,7 +32,7 @@ def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
 	fp = AllChem.GetMorganFingerprintAsBitVect(m1,2, nBits=2048)
 	binary = fp.ToBitString()
-	return list(binary) 
+	return list(binary)
 
 #calculate fingerprints for chunked array of smiles
 def arrayFP(inp):
@@ -68,8 +68,15 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	#if IDs aren't present, use SMILES as IDs
-	if not ids:
+	#remove IDs of SMILES parsing errors
+	if ids:
+		processed_ids = []
+		for idx, smi in enumerate(query):
+			if smi in processed_smi:
+				processed_ids.append(ids[idx])
+		ids = processed_ids
+	#if IDs weren't present, use SMILES as IDs
+	else:
 		ids = processed_smi
 	return matrix[:current_end], processed_smi, ids
 
@@ -111,7 +118,7 @@ def getPathwayInfo():
 		except KeyError:
 			return_dict1[l[0]] = [l[1]]
 		return_dict2[l[1]] = l[2:]
-	return return_dict1, return_dict2 
+	return return_dict1, return_dict2
 
 #unzip a pkl model
 def open_Model(mod):
@@ -122,7 +129,7 @@ def open_Model(mod):
 			clf = cPickle.load(fid)
 	return clf
 
-#prediction worker	
+#prediction worker
 def doTargetPrediction(pickled_model_name):
 	if os.name == 'nt': sep = '\\'
 	else: sep = '/'
@@ -155,7 +162,7 @@ def performTargetPrediction(models):
 	pool.join()
 	prediction_matrix = np.array([j for i,j in sorted(prediction_results.items())]).transpose()
 	return prediction_results, prediction_matrix, sorted(list(total_pw)), sorted(list(total_disease))
-	
+
 #initializer for the pool
 def initPool(querymatrix_, threshold_):
 	global querymatrix, threshold

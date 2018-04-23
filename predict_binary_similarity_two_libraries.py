@@ -69,8 +69,15 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	#if IDs aren't present, use SMILES as IDs
-	if not ids:
+	#remove IDs of SMILES parsing errors
+	if ids:
+		processed_ids = []
+		for idx, smi in enumerate(query):
+			if smi in processed_smi:
+				processed_ids.append(ids[idx])
+		ids = processed_ids
+	#if IDs weren't present, use SMILES as IDs
+	else:
 		ids = processed_smi
 	return matrix[:current_end], processed_smi, ids
 
