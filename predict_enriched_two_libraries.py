@@ -27,13 +27,13 @@ def introMessage():
 	print ' Address: Centre For Molecular Informatics, Dept. Chemistry, Lensfield Road, Cambridge CB2 1EW'
 	print '==============================================================================================\n'
 	return
-	
+
 #calculate 2048bit morgan fingerprints, radius 2
 def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
 	fp = AllChem.GetMorganFingerprintAsBitVect(m1,2, nBits=2048)
 	binary = fp.ToBitString()
-	return list(binary) 
+	return list(binary)
 
 #calculate fingerprints for chunked array of smiles
 def arrayFP(inp):
@@ -44,11 +44,11 @@ def arrayFP(inp):
 		except:
 			print 'SMILES Parse Error: ' + i
 	return outfp
-	
+
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
-	#collect IDs, if present
+	#discard IDs, if present
 	if len(query[0].split()) > 1:
 		query = [line.split()[0] for line in query]
 	matrix = np.empty((len(query), 2048), dtype=np.uint8)
@@ -87,8 +87,8 @@ def getDisgenetInfo():
 		try:
 			return_dict2[(l[1],l[0])] = float(l[2])
 		except ValueError: pass
-	return return_dict1, return_dict2 
-	
+	return return_dict1, return_dict2
+
 #get info for biosystems pathways
 def getPathwayInfo():
 	if os.name == 'nt': sep = '\\'
@@ -102,14 +102,14 @@ def getPathwayInfo():
 		except KeyError:
 			return_dict1[l[0]] = [l[1]]
 		return_dict2[l[1]] = l[2:]
-	return return_dict1, return_dict2 
+	return return_dict1, return_dict2
 
 #calculate prediction ratio for two sets of predictions
 def calcPredictionRatio(preds1,preds2):
 	preds1_percentage = float(preds1)/float(len(querymatrix1))
 	preds2_percentage = float(preds2)/float(len(querymatrix2))
 	if preds1 == 0 and preds2 == 0: return None
-	if preds1 == 0: return 999.0, round(preds1_percentage,3), round(preds2_percentage,3) 
+	if preds1 == 0: return 999.0, round(preds1_percentage,3), round(preds2_percentage,3)
 	if preds2 == 0: return 0.0, round(preds1_percentage,3), round(preds2_percentage,3)
 	return round(preds2_percentage/preds1_percentage,3), round(preds1_percentage,3), round(preds2_percentage,3)
 
@@ -147,15 +147,15 @@ def performTargetPrediction(models):
 		percent = (float(i)/float(len(models)))*100 + 1
 		sys.stdout.write(' Performing Classification on Query Molecules: %3d%%\r' % percent)
 		sys.stdout.flush()
-		if result is not None: 
+		if result is not None:
 			prediction_results.append(result)
 			updateHits(disease_links,disease_hits,result[1],result[2],result[4])
 			updateHits(pathway_links,pathway_hits,result[1],result[2],result[4])
 	pool.close()
 	pool.join()
 	return prediction_results
-	
-#update counts for each pathway/disease that is hit by predictions	
+
+#update counts for each pathway/disease that is hit by predictions
 def updateHits(links,hits,uniprot,hit1,hit2):
 	try:
 		for idx in links[uniprot]:
@@ -169,7 +169,7 @@ def updateHits(links,hits,uniprot,hit1,hit2):
 				hits[idx] = np.array([hit1,hit2])
 	except KeyError: return
 	return
-	
+
 #worker for the processHits to calculate the prediction ratio, Chi-square test in parallel
 def doHitProcess(inp):
 	idx, hits, n_f1_hits, n_f2_hits = inp
