@@ -25,13 +25,13 @@ def introMessage():
 	print '==============================================================================================\n'
 	return
 
-	
+
 #calculate 2048bit morgan fingerprints, radius 2
 def calcFingerprints(smiles):
 	m1 = Chem.MolFromSmiles(smiles)
 	fp = AllChem.GetMorganFingerprintAsBitVect(m1,2, nBits=2048)
 	binary = fp.ToBitString()
-	return list(binary) 
+	return list(binary)
 
 #calculate fingerprints for chunked array of smiles
 def arrayFP(inp):
@@ -67,8 +67,15 @@ def importQuery(in_file):
 		processed_smi += result[1]
 	pool.close()
 	pool.join()
-	#if IDs aren't present, use SMILES as IDs
-	if not ids:
+	#remove IDs of SMILES parsing errors
+	if ids:
+		processed_ids = []
+		for idx, smi in enumerate(query):
+			if smi in processed_smi:
+				processed_ids.append(ids[idx])
+		ids = processed_ids
+	#if IDs weren't present, use SMILES as IDs
+	else:
 		ids = processed_smi
 	return matrix[:current_end], processed_smi, ids
 
@@ -89,7 +96,7 @@ def open_Model(mod):
 			clf = cPickle.load(fid)
 	return clf
 
-#prediction worker	
+#prediction worker
 def doTargetPrediction(pickled_model_name):
 	if os.name == 'nt': sep = '\\'
 	else: sep = '/'
