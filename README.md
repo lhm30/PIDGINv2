@@ -40,7 +40,7 @@ Follow these steps on Linux/OSX:
 2. Open terminal in Mac/Linux and run ```conda install -c https://conda.anaconda.org/rdkit rdkit```
 3. Now run: ```conda install scikit-learn=0.17``` (PIDGINv2 uses Scikit-learn v17)
 4. Navigate the directory you wish to install PIDGINv2 and in Mac/Linux terminal run ```git clone https://github.com/lhm30/PIDGINv2/``` (recommended) or download/extract the zip from GitHub webpage
-5. Download and unzip models.zip into the PIDGINv2 directory from here: ```https://tinyurl.com/ycxn3u9u``` (leave .pkl.zip files compressed)
+5. Download and unzip models.zip into the PIDGINv2 directory from here: ```https://tinyurl.com/y39kqc83``` (leave .pkl.zip files compressed)
 6. If you would like decision tree capabilities, open terminal in Mac/Linux and run ```conda install pydot graphviz```
 
 * N.B Step 5 may take up to 10 minutes
