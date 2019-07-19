@@ -51,7 +51,7 @@ def arrayFP(inp):
 #import user query
 def importQuery(in_file):
 	query = open(in_file).read().splitlines()
-	#collect IDs, if present
+	#discard IDs, if present
 	if len(query[0].split()) > 1:
 		query = [line.split()[0] for line in query]
 	matrix = np.empty((len(query), 2048), dtype=np.uint8)
